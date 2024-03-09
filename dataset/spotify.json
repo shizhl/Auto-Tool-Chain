@@ -2,432 +2,546 @@
     {
         "query": "Make me a playlist containing three songs of Mariah Carey and name it 'Love Mariah'",
         "solution": [
-            "GET /search",
-            "GET /me",
-            "POST /users/{user_id}/playlists",
-            "POST /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 1,
+        "dataset": "spotify"
     },
     {
         "query": "Add the first song of The Dark Side of the Moon in my playback queue",
         "solution": [
-            "GET /search",
-            "GET /albums/{id}/tracks",
-            "POST /me/player/queue"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/albums/{id}/tracks",
+            "POST https://api.spotify.com/v1/me/player/queue"
+        ],
+        "q_id": 2,
+        "dataset": "spotify"
     },
     {
         "query": "Add Summertime Sadness by Lana Del Rey in my first playlist",
         "solution": [
-            "GET /search",
-            "GET /me/playlists",
-            "POST /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/me/playlists",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 3,
+        "dataset": "spotify"
     },
     {
         "query": "Skip to the next track and set the volume to 60",
         "solution": [
-            "POST /me/player/next",
-            "PUT /me/player/volume"
-        ]
+            "POST https://api.spotify.com/v1/me/player/next",
+            "PUT https://api.spotify.com/v1/me/player/volume"
+        ],
+        "q_id": 4,
+        "dataset": "spotify"
     },
     {
         "query": "Put the song now being played into My Music",
         "solution": [
-            "GET /me/player/currently-playing",
-            "PUT /me/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "PUT https://api.spotify.com/v1/me/tracks"
+        ],
+        "q_id": 5,
+        "dataset": "spotify"
     },
     {
         "query": "Append the first song of the newest album of my following first artist to my player queue",
         "solution": [
-            "GET /me/following",
-            "GET /artists/{id}/albums",
-            "GET /albums/{id}/tracks",
-            "POST /me/player/queue"
-        ]
+            "GET https://api.spotify.com/v1/me/following",
+            "GET https://api.spotify.com/v1/artists/{id}/albums",
+            "GET https://api.spotify.com/v1/albums/{id}/tracks",
+            "POST https://api.spotify.com/v1/me/player/queue"
+        ],
+        "q_id": 6,
+        "dataset": "spotify"
     },
     {
         "query": "Follow the artist of the song now playing",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /tracks/{id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/tracks/{id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 7,
+        "dataset": "spotify"
     },
     {
         "query": "Play a song from Taylor Swift's newest album",
         "solution": [
-            "GET /search",
-            "GET /artists/{id}/albums",
-            "PUT /me/player/play"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/artists/{id}/albums",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 8,
+        "dataset": "spotify"
     },
     {
         "query": "play me some quiet songs",
         "solution": [
-            "GET /search",
-            "PUT /me/player/play"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 9,
+        "dataset": "spotify"
     },
     {
         "query": "Follow the artist of the first song recently played",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /tracks/{id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/tracks/{id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 10,
+        "dataset": "spotify"
     },
     {
         "query": "Switch to the next song and set the single track repeat mode",
         "solution": [
-            "POST /me/player/next",
-            "PUT /me/player/repeat"
-        ]
+            "POST https://api.spotify.com/v1/me/player/next",
+            "PUT https://api.spotify.com/v1/me/player/repeat"
+        ],
+        "q_id": 11,
+        "dataset": "spotify"
     },
     {
         "query": "Save Jay Chou's album Mojito",
         "solution": [
-            "GET /search",
-            "PUT /me/albums"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "PUT https://api.spotify.com/v1/me/albums"
+        ],
+        "q_id": 12,
+        "dataset": "spotify"
     },
     {
         "query": "Rename my first playlist to \"My First\"",
         "solution": [
-            "GET /me/playlists",
-            "PUT /playlists/{playlist_id}"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "PUT https://api.spotify.com/v1/playlists/{playlist_id}"
+        ],
+        "q_id": 13,
+        "dataset": "spotify"
     },
     {
         "query": "Remove following from the artist of the currently playing music",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /tracks/{id}",
-            "DELETE /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/tracks/{id}",
+            "DELETE https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 14,
+        "dataset": "spotify"
     },
     {
         "query": "Pause playback, turn down the volume and resume playing",
         "solution": [
-            "PUT /me/player/pause",
-            "PUT /me/player/volume",
-            "PUT /me/player/play"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/pause",
+            "PUT https://api.spotify.com/v1/me/player/volume",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 15,
+        "dataset": "spotify"
     },
     {
         "query": "Add songs from the current playing queue to a new playlist called \"Current\"",
         "solution": [
-            "GET /me/player/queue",
-            "GET /me",
-            "POST /users/{user_id}/playlists",
-            "PUT /playlists/{playlist_id}"
-        ]
+            "GET https://api.spotify.com/v1/me/player/queue",
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists",
+            "PUT https://api.spotify.com/v1/playlists/{playlist_id}"
+        ],
+        "q_id": 16,
+        "dataset": "spotify"
     },
     {
         "query": "What is the name of the song I playing right now?",
         "solution": [
-            "GET /me/player/currently-playing"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing"
+        ],
+        "q_id": 17,
+        "dataset": "spotify"
     },
     {
         "query": "Remove the first album from my music",
         "solution": [
-            "GET /me/albums",
-            "DELETE /me/albums"
-        ]
+            "GET https://api.spotify.com/v1/me/albums",
+            "DELETE https://api.spotify.com/v1/me/albums"
+        ],
+        "q_id": 18,
+        "dataset": "spotify"
     },
     {
         "query": "Show me the albums I saved",
         "solution": [
-            "GET /me/albums"
-        ]
+            "GET https://api.spotify.com/v1/me/albums"
+        ],
+        "q_id": 19,
+        "dataset": "spotify"
     },
     {
         "query": "Follow the artist of the song which is playing right now.",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /tracks/{id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/tracks/{id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 20,
+        "dataset": "spotify"
     },
     {
         "query": "Recommend me some tracks with the same genre of the music currently playing",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /search"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/search"
+        ],
+        "q_id": 21,
+        "dataset": "spotify"
     },
     {
         "query": "Append the first track in The Beatle's newest album to my 'My Rock' playlist",
         "solution": [
-            "GET /search",
-            "GET /artists/{id}/albums",
-            "POST /playlists/{playlist_id}/tracks",
-            "PUT /playlists/{playlist_id}"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/artists/{id}/albums",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            "PUT https://api.spotify.com/v1/playlists/{playlist_id}"
+        ],
+        "q_id": 22,
+        "dataset": "spotify"
     },
     {
         "query": "Make top tracks of Taylor Swift a new playlist named \"Love Taylor\"",
         "solution": [
-            "GET /artists/{id}/top-tracks",
-            "GET /me",
-            "POST /users/{user_id}/playlists",
-            "POST /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/artists/{id}/top-tracks",
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 23,
+        "dataset": "spotify"
     },
     {
         "query": "Who is my favorite artist?",
         "solution": [
-            "GET /me/top/{type}"
-        ]
+            "GET https://api.spotify.com/v1/me/top/{type}"
+        ],
+        "q_id": 24,
+        "dataset": "spotify"
     },
     {
         "query": "Give me a song of my favorite artist",
         "solution": [
-            "GET /me/top/{type}",
-            "GET /artists/{id}"
-        ]
+            "GET https://api.spotify.com/v1/me/top/{type}",
+            "GET https://api.spotify.com/v1/artists/{id}"
+        ],
+        "q_id": 25,
+        "dataset": "spotify"
     },
     {
         "query": "Delete all music from my 'My R&B' playlist and rename it as 'Test'",
         "solution": [
-            "GET /me/playlists",
-            "DELETE /playlists/{playlist_id}/tracks",
-            "PUT /playlists/{playlist_id}"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            "PUT https://api.spotify.com/v1/playlists/{playlist_id}"
+        ],
+        "q_id": 26,
+        "dataset": "spotify"
     },
     {
         "query": "show me the album information of the song currently playing",
         "solution": [
-            "GET /me/player/currently-playing",
-            "GET /tracks/{id}"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "GET https://api.spotify.com/v1/tracks/{id}"
+        ],
+        "q_id": 27,
+        "dataset": "spotify"
     },
     {
         "query": "Pause device 'My PC' if it is now playing something",
         "solution": [
-            "GET /me/player",
-            "PUT /me/player/pause"
-        ]
+            "GET https://api.spotify.com/v1/me/player",
+            "PUT https://api.spotify.com/v1/me/player/pause"
+        ],
+        "q_id": 28,
+        "dataset": "spotify"
     },
     {
         "query": "pause current song and resume it on 'My PC'",
         "solution": [
-            "PUT /me/player/pause",
-            "GET /me/player/devices",
-            "PUT /me/player/play"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/pause",
+            "GET https://api.spotify.com/v1/me/player/devices",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 29,
+        "dataset": "spotify"
     },
     {
         "query": "show me the name of Maroon 5's newest album",
         "solution": [
-            "GET /search",
-            "GET /artists/{id}/albums"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/artists/{id}/albums"
+        ],
+        "q_id": 30,
+        "dataset": "spotify"
     },
     {
         "query": "Recommend more artists base on my first following artist",
         "solution": [
-            "GET /me/following",
-            "GET /artists/{id}/related-artists"
-        ]
+            "GET https://api.spotify.com/v1/me/following",
+            "GET https://api.spotify.com/v1/artists/{id}/related-artists"
+        ],
+        "q_id": 31,
+        "dataset": "spotify"
     },
     {
         "query": "Unfollow the artist of the song now playing and skip to the next song",
         "solution": [
-            "GET /me/player/currently-playing",
-            "DELETE /me/following",
-            "POST /me/player/next"
-        ]
+            "GET https://api.spotify.com/v1/me/player/currently-playing",
+            "DELETE https://api.spotify.com/v1/me/following",
+            "POST https://api.spotify.com/v1/me/player/next"
+        ],
+        "q_id": 32,
+        "dataset": "spotify"
     },
     {
         "query": "Follow Taylor Swift",
         "solution": [
-            "GET /search",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 33,
+        "dataset": "spotify"
     },
     {
         "query": "Make my top tracks a new playlist called 'My Top'",
         "solution": [
-            "GET /me/top/{type}",
-            "GET /me",
-            "POST /users/{user_id}/playlists",
-            "POST /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/top/{type}",
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 34,
+        "dataset": "spotify"
     },
     {
         "query": "Remove the first song from my playlist 'My Rock'",
         "solution": [
-            "GET /me/playlists",
-            "GET /playlists/{playlist_id}/tracks",
-            "DELETE /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            "DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 35,
+        "dataset": "spotify"
     },
     {
         "query": "add top songs of the first of my following artist to My Music",
         "solution": [
-            "GET /me/following",
-            "GET /artists/{id}/top-tracks",
-            "PUT /me/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/following",
+            "GET https://api.spotify.com/v1/artists/{id}/top-tracks",
+            "PUT https://api.spotify.com/v1/me/tracks"
+        ],
+        "q_id": 36,
+        "dataset": "spotify"
     },
     {
         "query": "Follow all the artists involved in the playlist 'My R&B'",
         "solution": [
-            "GET /me",
-            "GET /playlists/{playlist_id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me",
+            "GET https://api.spotify.com/v1/playlists/{playlist_id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 37,
+        "dataset": "spotify"
     },
     {
         "query": "remove the second track from my playlist 'My R&B'",
         "solution": [
-            "GET /me/playlists",
-            "GET /playlists/{playlist_id}/tracks",
-            "DELETE /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            "DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 38,
+        "dataset": "spotify"
     },
     {
         "query": "remove the third track from My Music",
         "solution": [
-            "GET /me/tracks",
-            "DELETE /me/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/tracks",
+            "DELETE https://api.spotify.com/v1/me/tracks"
+        ],
+        "q_id": 39,
+        "dataset": "spotify"
     },
     {
         "query": "Follow all the singers involved in the song When You Believe",
         "solution": [
-            "GET /search",
-            "GET /track/{id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/track/{id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 40,
+        "dataset": "spotify"
     },
     {
         "query": "Skip to the next track",
         "solution": [
-            "POST /me/player/next"
-        ]
+            "POST https://api.spotify.com/v1/me/player/next"
+        ],
+        "q_id": 41,
+        "dataset": "spotify"
     },
     {
         "query": "Play my playlist 'My Rock'",
         "solution": [
-            "GET /me/playlists",
-            "PUT /me/player/play"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 42,
+        "dataset": "spotify"
     },
     {
         "query": "Clear my music library and cancel all following singers",
         "solution": [
-            "GET /me/tracks",
-            "DELETE /me/tracks",
-            "GET /me/following",
-            "DELETE /me/following"
-        ]
+            "GET https://api.spotify.com/v1/me/tracks",
+            "DELETE https://api.spotify.com/v1/me/tracks",
+            "GET https://api.spotify.com/v1/me/following",
+            "DELETE https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 43,
+        "dataset": "spotify"
     },
     {
         "query": "Create a new playlist and name it Quiet",
         "solution": [
-            "GET /me",
-            "POST /users/{user_id}/playlists"
-        ]
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists"
+        ],
+        "q_id": 44,
+        "dataset": "spotify"
     },
     {
         "query": "Turn down the volume to 20",
         "solution": [
-            "PUT /me/player/volume"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/volume"
+        ],
+        "q_id": 45,
+        "dataset": "spotify"
     },
     {
         "query": "Set the single track repeat mode",
         "solution": [
-            "PUT /me/player/repeat"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/repeat"
+        ],
+        "q_id": 46,
+        "dataset": "spotify"
     },
     {
         "query": "Pause playback, increase volume to 80 and switch to the next song",
         "solution": [
-            "PUT /me/player/pause",
-            "PUT /me/player/volume",
-            "POST /me/player/next"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/pause",
+            "PUT https://api.spotify.com/v1/me/player/volume",
+            "POST https://api.spotify.com/v1/me/player/next"
+        ],
+        "q_id": 47,
+        "dataset": "spotify"
     },
     {
         "query": "Play the newest album of BIGBANG",
         "solution": [
-            "GET /search",
-            "GET /artists/{id}/albums",
-            "PUT /me/player/play"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/artists/{id}/albums",
+            "PUT https://api.spotify.com/v1/me/player/play"
+        ],
+        "q_id": 48,
+        "dataset": "spotify"
     },
     {
         "query": "Follow the artist of the album Mojito",
         "solution": [
-            "GET /search",
-            "GET /albums/{id}",
-            "PUT /me/following"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "GET https://api.spotify.com/v1/albums/{id}",
+            "PUT https://api.spotify.com/v1/me/following"
+        ],
+        "q_id": 49,
+        "dataset": "spotify"
     },
     {
         "query": "Play the third song from my music library and set the single track repeat mode",
         "solution": [
-            "GET /me/tracks",
-            "GET /tracks/{id}",
-            "PUT /me/player/play",
-            "PUT /me/player/repeat"
-        ]
+            "GET https://api.spotify.com/v1/me/tracks",
+            "GET https://api.spotify.com/v1/tracks/{id}",
+            "PUT https://api.spotify.com/v1/me/player/play",
+            "PUT https://api.spotify.com/v1/me/player/repeat"
+        ],
+        "q_id": 50,
+        "dataset": "spotify"
     },
     {
         "query": "Create a new playlist named 'BIGBANG' and add a song of BIGBANG to it",
         "solution": [
-            "GET /me",
-            "POST /users/{user_id}/playlists",
-            "GET /search",
-            "POST /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me",
+            "POST https://api.spotify.com/v1/users/{user_id}/playlists",
+            "GET https://api.spotify.com/v1/search",
+            "POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 51,
+        "dataset": "spotify"
     },
     {
         "query": "Delete all songs from my first playlist",
         "solution": [
-            "GET /me/playlists",
-            "GET /playlists/{playlist_id}",
-            "DELETE /playlists/{playlist_id}/tracks"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "GET https://api.spotify.com/v1/playlists/{playlist_id}",
+            "DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        ],
+        "q_id": 52,
+        "dataset": "spotify"
     },
     {
         "query": "Make my first playlist private",
         "solution": [
-            "GET /me/playlists",
-            "GET /playlists/{playlist_id}",
-            "PUT /playlists/{playlist_id}"
-        ]
+            "GET https://api.spotify.com/v1/me/playlists",
+            "GET https://api.spotify.com/v1/playlists/{playlist_id}",
+            "PUT https://api.spotify.com/v1/playlists/{playlist_id}"
+        ],
+        "q_id": 53,
+        "dataset": "spotify"
     },
     {
         "query": "Add album Mojito to my music library",
         "solution": [
-            "GET /search",
-            "PUT /me/albums"
-        ]
+            "GET https://api.spotify.com/v1/search",
+            "PUT https://api.spotify.com/v1/me/albums"
+        ],
+        "q_id": 54,
+        "dataset": "spotify"
     },
     {
         "query": "Add the first song from my music library to the playback queue and enable single song repeat mode",
         "solution": [
-            "GET /me/tracks",
-            "POST /me/player/queue",
-            "PUT /me/player/repeat"
-        ]
+            "GET https://api.spotify.com/v1/me/tracks",
+            "POST https://api.spotify.com/v1/me/player/queue",
+            "PUT https://api.spotify.com/v1/me/player/repeat"
+        ],
+        "q_id": 55,
+        "dataset": "spotify"
     },
     {
         "query": "What is my user name?",
         "solution": [
-            "GET /me"
-        ]
+            "GET https://api.spotify.com/v1/me"
+        ],
+        "q_id": 56,
+        "dataset": "spotify"
     },
     {
         "query": "Pause the player",
         "solution": [
-            "PUT /me/player/pause"
-        ]
+            "PUT https://api.spotify.com/v1/me/player/pause"
+        ],
+        "q_id": 57,
+        "dataset": "spotify"
     }
 ]

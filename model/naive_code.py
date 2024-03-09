@@ -69,7 +69,7 @@ def run_tmdb(rank, data, model_name):
     for line in tqdm(data):
         # print(line)
         tools = line['solution']
-        while len(tools) < 14:
+        while len(tools) < 25:
             tool = negative[random.randint(0, 10000) % len(negative)]
             if tool not in tools:
                 tools.append(tool)
@@ -79,7 +79,7 @@ def run_tmdb(rank, data, model_name):
         encoded_docs = encoder.encode(instruction)
         print(len(encoded_docs))
         line['results'] = model.generate(messages=[{"role": "user", 'content': instruction}])
-        line['usage'] = model.get_token()
+        line['usage'] = model.token[-1]
         # except:
         #     print(line)
         #     line['results'] = None
@@ -87,6 +87,9 @@ def run_tmdb(rank, data, model_name):
 
     return rank, results
 
+
+def run_spotify(rank,data,model_name):
+    pass
 
 def evaluate(results):
     cnt = []
@@ -119,6 +122,6 @@ if __name__ == '__main__':
     data = load_data('D:/Paper2024/CodeTool/dataset/tmdb.json')
     # results=run_tmdb(0, data, 'gpt-3.5-turbo')
     results = multi_process_func(ranks=list(range(10)), func=run_tmdb, data=data, model='gpt-3.5-turbo')
-    write_file(results, '../logs/naive_results.14.2.json')
-    results=evaluate(load_data('../logs/naive_results.14.2.json'))
-    write_file(results, '../logs/naive_results_exec.14.2.json')
+    write_file(results, '../logs/naive_results.25.2.json')
+    results=evaluate(load_data('../logs/naive_results.25.2.json'))
+    write_file(results, '../logs/naive_results_exec.25.2.json')
