@@ -681,7 +681,7 @@
         "dataset": "tmdb"
     },
     {
-        "query": "What is the name of the third episod of the second season of Mandalorian?",
+        "query": "What is the name of the third episode of the second season of Mandalorian?",
         "solution": [
             "GET https://api.themoviedb.org/3/search/tv",
             "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}"
@@ -689,7 +689,7 @@
         "dataset": "tmdb"
     },
     {
-        "query": "When is the bitrhday of the lead actor of the movie The Shawshank Redemptionn?",
+        "query": "When is the birthday of the lead actor of the movie The Shawshank Redemptionn?",
         "solution": [
             "GET https://api.themoviedb.org/3/search/movie",
             "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",

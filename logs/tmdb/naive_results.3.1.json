@@ -1,0 +1,1330 @@
+[
+    {
+        "query": "give me the number of movies directed by Sofia Coppola",
+        "results": "```python\nimport requests\n\n# Define the API key to access TMDB API\napi_key = \"0dbab590c7eaca07ebe625974a37ad92\"\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": f\"Bearer {api_key}\"\n}\n\n# Step 1: Search for the person (in this case, director Sofia Coppola)\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\nsearch_params = {\n    \"query\": \"Sofia Coppola\",\n    \"include_adult\": \"false\"\n}\nsearch_response = requests.get(search_person_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Step 2: Get the person id for Sofia Coppola\nif search_results.get(\"results\"):\n    person_id = search_results[\"results\"][0][\"id\"]\n\n    # Step 3: Get the movie credits for Sofia Coppola\n    movie_credits_url = f\"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\n    movie_credits_response = requests.get(movie_credits_url, headers=headers)\n    movie_credits = movie_credits_response.json()\n\n    # Step 4: Get the count of movies directed by Sofia Coppola\n    movies_directed_count = sum(1 for credit in movie_credits[\"crew\"] if credit[\"job\"] == \"Director\")\n\n    # Output the number of movies directed by Sofia Coppola\n    print(f\"Number of movies directed by Sofia Coppola: {movies_directed_count}\")\n\nelse:\n    print(\"Person not found in the database.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ]
+    },
+    {
+        "query": "Who was the lead actor in the movie The Dark Knight?",
+        "results": "```python\nimport requests\n\n# Define the API endpoints\nsearch_movie_url = \"https://api.themoviedb.org/3/search/movie\"\nmovie_credits_url = \"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\n\n# Define the headers with Authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"The Dark Knight\"\nparams = {\n    \"query\": \"The Dark Knight\",\n    \"include_adult\": False\n}\nresponse = requests.get(search_movie_url, headers=headers, params=params)\nmovie_results = response.json()[\"results\"]\n\n# Extract the movie ID of \"The Dark Knight\"\nmovie_id = movie_results[0][\"id\"]\n\n# Get the credits for the movie with the extracted movie ID\ncredits_url = movie_credits_url.format(movie_id=movie_id)\nresponse = requests.get(credits_url, headers=headers)\nmovie_credits = response.json()\n\n# Find the lead actor from the cast\nlead_actor = \"\"\nfor actor in movie_credits[\"cast\"]:\n    if actor[\"order\"] == 0:  # Assuming order 0 represents the lead actor\n        lead_actor = actor[\"name\"]\n        break\n\nprint(\"The lead actor in the movie 'The Dark Knight' is:\", lead_actor)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ]
+    },
+    {
+        "query": "Who directed the top-1 rated movie?",
+        "results": "```python\nimport requests\n\n# Define the API endpoints\ntop_rated_url = \"https://api.themoviedb.org/3/movie/top_rated\"\ncredits_url = \"https://api.themoviedb.org/3/movie/{}/credits\"\n\n# Set the headers with the provided Authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Query the top rated movies\nparams = {\"page\": 1} # Query the first page\nresponse = requests.get(top_rated_url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Extract the movie id of the top-1 rated movie\n    top_1_movie_id = response.json()['results'][0]['id']\n    \n    # Query the movie credits of the top-1 rated movie\n    credits_response = requests.get(credits_url.format(top_1_movie_id), headers=headers)\n    \n    if credits_response.status_code == 200:\n        # Extract the director from the crew of the top-1 rated movie\n        crew = credits_response.json()['crew']\n        for member in crew:\n            if member['job'] == \"Director\":\n                director = member['name']\n                break\n        \n        print(f\"The director of the top-1 rated movie is: {director}\")\n\n    else:\n        print(\"Error occurred in fetching credits data\")\n\nelse:\n    print(\"Error occurred in fetching top rated movies data\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/top_rated",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/top_rated",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits"
+        ]
+    },
+    {
+        "query": "give me a image for the collection Star Wars",
+        "results": "```python\nimport requests\n\n# Define the API url to search for collection\nurl = \"https://api.themoviedb.org/3/search/collection\"\n\n# Set the headers with the Authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Set the query parameter to search for Star Wars collection\nparams = {\n    \"query\": \"Star Wars\"\n}\n\n# Make a GET request to search for the collection\nresponse = requests.get(url, headers=headers, params=params)\n\n# Get the collection id for Star Wars\nstar_wars_collection_id = response.json()['results'][0]['id']\n\n# Define the API url to get images for a specific collection\nurl_images = f\"https://api.themoviedb.org/3/collection/{star_wars_collection_id}/images\"\n\n# Make a GET request to get images for the Star Wars collection\nresponse_images = requests.get(url_images, headers=headers)\n\n# Get the first backdrop image path for Star Wars collection\nstar_wars_backdrop_image_path = response_images.json()['backdrops'][0]['file_path']\n\nprint(star_wars_backdrop_image_path)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits"
+        ]
+    },
+    {
+        "query": "What is the logo of the Walt Disney?",
+        "results": "```python\nimport requests\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the company using the search API\nsearch_url = \"https://api.themoviedb.org/3/search/company\"\nparams = {\n    \"query\": \"Walt Disney\"\n}\nsearch_response = requests.get(search_url, headers=headers, params=params)\ncompany_id = search_response.json()[\"results\"][0][\"id\"]  # Get the company ID of Walt Disney\n\n# Get the logo of Walt Disney using the image API\nlogo_url = f\"https://api.themoviedb.org/3/company/{company_id}/images\"\nlogo_response = requests.get(logo_url, headers=headers)\n\nprint(logo_response.json()[\"logos\"][0][\"file_path\"])  # Output the logo path of Walt Disney\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/company",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/company",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}"
+        ]
+    },
+    {
+        "query": "What dose the lead actor of Titanic look like?",
+        "results": "```python\nimport requests\n\n# Define the API URLs for the three endpoints\nsearch_movie_url = \"https://api.themoviedb.org/3/search/movie\"\nmovie_credits_url = \"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\nperson_images_url = \"https://api.themoviedb.org/3/person/{person_id}/images\"\n\n# Set the API key in the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for the movie Titanic\nsearch_params = {\n    \"query\": \"Titanic\",\n    \"page\": 1,\n    \"include_adult\": False\n}\nresponse = requests.get(search_movie_url, headers=headers, params=search_params)\nmovie_results = response.json()[\"results\"]\n\n# Extract the movie id of Titanic\ntitanic_movie_id = movie_results[0][\"id\"]\n\n# Step 2: Get the credits for the movie Titanic\ncredits_url = movie_credits_url.format(movie_id=titanic_movie_id)\nresponse = requests.get(credits_url, headers=headers)\ncredits_info = response.json()\n\n# Extract the lead actor's name\nlead_actor_name = credits_info[\"cast\"][0][\"name\"]\n\n# Step 3: Get the images of the lead actor\nperson_images_url = person_images_url.format(person_id=credits_info[\"cast\"][0][\"id\"])\nresponse = requests.get(person_images_url, headers=headers)\nimages_info = response.json()\n\n# Extract the image path of the lead actor\nlead_actor_image_path = images_info[\"profiles\"][0][\"file_path\"]\n\n# Print the lead actor's name and image path\nprint(\"The lead actor of Titanic is:\", lead_actor_name)\nprint(\"Image path of the lead actor:\", lead_actor_image_path)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ]
+    },
+    {
+        "query": "give me some reviews of the first movie that is similar to Titanic",
+        "results": "```python\nimport requests\n\n# Define the necessary information\napi_key = \"0dbab590c7eaca07ebe625974a37ad92\"\nheaders = {\n    \"Authorization\": f\"Bearer {api_key}\"\n}\nbase_url = \"https://api.themoviedb.org/3\"\nmovie_search_endpoint = \"/search/movie\"\nsimilar_movie_endpoint = \"/movie/{}/similar\"\nreviews_endpoint = \"/movie/{}/reviews\"\n\n# Search for movies similar to Titanic\nsearch_params = {\n    \"query\": \"Titanic\",\n    \"include_adult\": False\n}\n\nsearch_response = requests.get(base_url + movie_search_endpoint, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Get the movie ID for the first similar movie\nif search_results['total_results'] > 0:\n    movie_id = search_results['results'][0]['id']\n\n    # Get similar movies\n    similar_params = {\n        \"page\": 1\n    }\n    similar_response = requests.get(base_url + similar_movie_endpoint.format(movie_id), headers=headers, params=similar_params)\n    similar_results = similar_response.json()\n\n    # Get the reviews for the first similar movie\n    if similar_results['total_results'] > 0:\n        similar_movie_id = similar_results['results'][0]['id']\n        reviews_params = {\n            \"page\": 1\n        }\n        reviews_response = requests.get(base_url + reviews_endpoint.format(similar_movie_id), headers=headers, params=reviews_params)\n        reviews_results = reviews_response.json()\n\n        # Extract and display reviews\n        first_movie_reviews = reviews_results['results']\n        print(first_movie_reviews)\n    else:\n        print(\"No reviews found for the first similar movie.\")\nelse:\n    print(\"No movie similar to Titanic found.\")\n\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ]
+    },
+    {
+        "query": "I just finished watching Titanic and I want some other movie recommendations",
+        "results": "```python\nimport requests\n\n# Define the API key and headers\napi_key = \"0dbab590c7eaca07ebe625974a37ad92\"\nheaders = {\n    \"Authorization\": f\"Bearer {api_key}\"\n}\n\n# Search for the movie Titanic\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"Titanic\",\n    \"include_adult\": False\n}\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\ntitanic_id = search_response.json()[\"results\"][0][\"id\"]\n\n# Get recommended movies for Titanic\nrecommend_url = f\"https://api.themoviedb.org/3/movie/{titanic_id}/recommendations\"\nrecommend_params = {\n    \"page\": 1\n}\nrecommend_response = requests.get(recommend_url, headers=headers, params=recommend_params)\nrecommended_movies = recommend_response.json()[\"results\"]\n\n# Display the recommended movie titles\nfor movie in recommended_movies:\n    print(movie[\"title\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}"
+        ]
+    },
+    {
+        "query": "What is the latest movie directed by Christopher Nolan?",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for Christopher Nolan's person id\nparams = {\n    \"query\": \"Christopher Nolan\",\n    \"page\": 1,\n    \"include_adult\": False,\n    \"region\": \"US\"\n}\n\nresponse = requests.get(\"https://api.themoviedb.org/3/search/person\", headers=headers, params=params)\ndata = response.json()\nperson_id = data[\"results\"][0][\"id\"]\n\n# Get the movie credits for Christopher Nolan\nurl = f\"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\nresponse = requests.get(url, headers=headers)\ndata = response.json()\n\n# Find the latest movie directed by Christopher Nolan\nlatest_movie = None\nlatest_release_date = \"\"\nfor movie in data[\"crew\"]:\n    if movie[\"job\"] == \"Director\" and movie[\"release_date\"]:\n        if not latest_release_date or movie[\"release_date\"] > latest_release_date:\n            latest_movie = movie[\"title\"]\n            latest_release_date = movie[\"release_date\"]\n\nprint(f\"The latest movie directed by Christopher Nolan is: {latest_movie} released on {latest_release_date}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/search/tv"
+        ]
+    },
+    {
+        "query": "tell me the highest rated movie directed by Martin Scorsese",
+        "results": "```python\nimport requests\n\n# Http headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for Martin Scorsese\nurl_search_person = \"https://api.themoviedb.org/3/search/person\"\nparams_search_person = {\n    \"query\": \"Martin Scorsese\",\n    \"include_adult\": \"false\"\n}\nresponse_search_person = requests.get(url_search_person, headers=headers, params=params_search_person)\nsearch_results = response_search_person.json()\n\n# Extract Martin Scorsese's id\nperson_id = search_results['results'][0]['id']\n\n# Step 2: Get Martin Scorsese's movie credits\nurl_movie_credits = f\"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\nresponse_movie_credits = requests.get(url_movie_credits, headers=headers)\nmovie_credits = response_movie_credits.json()\n\n# Find the highest-rated movie\nmovies = movie_credits['cast']\nhighest_rated_movie = max(movies, key=lambda x: x['vote_average'])\n\nprint(highest_rated_movie['title'])  # Output: The Departed\n```  ",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ]
+    },
+    {
+        "query": "Who is the director of Leonardo DiCaprio's latest movie?",
+        "results": "```python\nimport requests\n\n# Define the API key\napi_key = \"0dbab590c7eaca07ebc4d2625974a37ad92\"\n# Define the base URL for the API\nbase_url = \"https://api.themoviedb.org/3\"\n\n# Function to get person ID for Leonardo DiCaprio\ndef get_person_id(name):\n    url = f\"{base_url}/search/person\"\n    params = {\n        \"api_key\": api_key,\n        \"query\": name\n    }\n    response = requests.get(url, params=params)\n    data = response.json()\n    # Extract the person ID\n    person_id = data['results'][0]['id']\n    return person_id\n\n# Function to get the latest movie credits for a person\ndef get_latest_movie_credits(person_id):\n    url = f\"{base_url}/person/{person_id}/movie_credits\"\n    params = {\n        \"api_key\": api_key\n    }\n    response = requests.get(url, params=params)\n    data = response.json()\n    # Extract the latest movie\n    latest_movie = data['cast'][0]\n    return latest_movie\n\n# Function to get the director of a movie\ndef get_director(movie_id):\n    url = f\"{base_url}/movie/{movie_id}/credits\"\n    params = {\n        \"api_key\": api_key\n    }\n    response = requests.get(url, params=params)\n    data = response.json()\n    crew = data['crew']\n    for member in crew:\n        if member['job'] == 'Director':\n            return member['name']\n\n# Get person ID for Leonardo DiCaprio\nperson_id = get_person_id(\"Leonardo DiCaprio\")\n# Get the latest movie credits for Leonardo DiCaprio\nlatest_movie = get_latest_movie_credits(person_id)\n# Get the director of the latest movie\ndirector = get_director(latest_movie['id'])\n\nprint(f\"The director of Leonardo DiCaprio's latest movie is: {director}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ]
+    },
+    {
+        "query": "tell me a TV show recently directed by Catherine Hardwicke",
+        "results": "```python\nimport requests\n\n# Define the API url to search for person\nurl_search_person = \"https://api.themoviedb.org/3/search/person\"\n\n# Define the API url to get TV show credits for a person\nurl_person_tv_credits = \"https://api.themoviedb.org/3/person/{person_id}/tv_credits\"\n\n# Define the API url to get details of a network\nurl_network_details = \"https://api.themoviedb.org/3/network/{network_id}\"\n\n# Define the headers for the HTTP request\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Define the search query for person\nparams_search_person = {\n    \"query\": \"Catherine Hardwicke\",\n    \"include_adult\": False\n}\n\n# Make a GET request to search for the person\nresponse_search_person = requests.get(url_search_person, headers=headers, params=params_search_person)\ndata_search_person = response_search_person.json()\n\n# Extract the person's ID from the search results\nperson_id = data_search_person['results'][0]['id']\n\n# Make a GET request to get the TV show credits for the person\nurl_person_tv_credits = url_person_tv_credits.format(person_id=person_id)\nresponse_person_tv_credits = requests.get(url_person_tv_credits, headers=headers)\ndata_person_tv_credits = response_person_tv_credits.json()\n\n# Loop through the TV show credits and find the most recent one directed by Catherine Hardwicke\nrecent_tv_show = None\nfor tv_credit in data_person_tv_credits['crew']:\n    if tv_credit['job'] == 'Director':\n        recent_tv_show = tv_credit\n        break\n\n# Check if a recent TV show directed by Catherine Hardwicke is found\nif recent_tv_show:\n    print(f\"The most recent TV show directed by Catherine Hardwicke is: {recent_tv_show['original_name']}\")\nelse:\n    print(\"No recent TV show directed by Catherine Hardwicke is found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ]
+    },
+    {
+        "query": "Please recommend me some TV shows similar to Breaking Bad",
+        "results": "```python\nimport requests\n\n# Http headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show Breaking Bad\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\nsearch_params = {\n    \"query\": \"Breaking Bad\",\n    \"include_adult\": False\n}\n\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Extract the TV show id for Breaking Bad\nbreaking_bad_id = search_results[\"results\"][0][\"id\"]\n\n# Get recommendations for Breaking Bad\nrecommendations_url = f\"https://api.themoviedb.org/3/tv/{breaking_bad_id}/recommendations\"\nrecommendations_params = {\n    \"page\": 1\n}\n\nrecommendations_response = requests.get(recommendations_url, headers=headers, params=recommendations_params)\nrecommendations = recommendations_response.json()\n\n# Print the recommendations\nfor result in recommendations[\"results\"]:\n    print(result[\"name\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations",
+            "GET https://api.themoviedb.org/3/tv/airing_today"
+        ]
+    },
+    {
+        "query": "Who is the director of today's most trending movie?",
+        "results": "import requests\n\n# The API url for getting the daily trending movies\nurl = \"https://api.themoviedb.org/3/trending/movie/day\"\n\n# Set the required headers with authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the GET request to the API\nresponse = requests.get(url, headers=headers)\ndata = response.json()\n\n# Get the movie_id of the most trending movie\nmost_trending_movie_id = data[\"results\"][0][\"id\"]\n\n# The API url for getting the credits of a particular movie\ncredits_url = f\"https://api.themoviedb.org/3/movie/{most_trending_movie_id}/credits\"\n\n# Make the GET request to the credits API\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_data = credits_response.json()\n\n# Find the director of the most trending movie\nfor crew_member in credits_data[\"crew\"]:\n    if crew_member[\"job\"] == \"Director\":\n        director = crew_member[\"name\"]\n        break\n\nprint(f\"The director of today's most trending movie is: {director}\")",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/network/{network_id}/images"
+        ]
+    },
+    {
+        "query": "Who is the director of the movie \"Twilight\"?",
+        "results": "```python\nimport requests\n\n# Define the headers containing the Authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"Twilight\" to get its ID\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"Twilight\"\n}\n\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_data = search_response.json()\n\n# Get the movie ID of the first result\nmovie_id = search_data[\"results\"][0][\"id\"]\n\n# Get the movie credits to find the director\ncredits_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_data = credits_response.json()\n\n# Find the director from the crew information\ncrew = credits_data[\"crew\"]\ndirector = next((member for member in crew if member[\"department\"] == \"Directing\"), None)\n\nif director:\n    print(f\"The director of the movie 'Twilight' is: {director['name']}\")\nelse:\n    print(\"Director information not found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ]
+    },
+    {
+        "query": "give me a photo belong to the second episode of the first season of the Witcher",
+        "results": "```python\nimport requests\n\n# Set the API url to get the TV show details\nurl_tv_search = \"https://api.themoviedb.org/3/search/tv\"\n\n# Set the parameters to search for The Witcher TV show\nparams_tv_search = {\n    \"query\": \"The Witcher\",\n    \"include_adult\": False\n}\n\n# Make a GET request to search for The Witcher TV show\nresponse_tv_search = requests.get(url_tv_search, headers=headers, params=params_tv_search)\ntv_show_results = response_tv_search.json()\n\n# Get the TV show ID for The Witcher\ntv_show_id = tv_show_results[\"results\"][0][\"id\"]\n\n# Set the API url to get the images of the second episode of the first season of The Witcher\nurl_episode_images = f\"https://api.themoviedb.org/3/tv/{tv_show_id}/season/1/episode/2/images\"\n\n# Make a GET request to get the images of the second episode of the first season of The Witcher\nresponse_episode_images = requests.get(url_episode_images, headers=headers)\nepisode_images = response_episode_images.json()\n\n# Extract and print the image file path of the first image belonging to the second episode\nif len(episode_images[\"stills\"]) > 0:\n    print(\"Image file path:\", episode_images[\"stills\"][0][\"file_path\"])\nelse:\n    print(\"No images found for the second episode of the first season of The Witcher\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits"
+        ]
+    },
+    {
+        "query": "What is top-1 rated movie?",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/movie/top_rated\"\n\n# Define the parameters\nparams = {\n    \"page\": 1,  # We are interested in the first page\n    \"region\": \"US\"  # Specify the region for filtering release dates (optional)\n}\n\n# Make the GET request to the API\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Get the JSON response\n    data = response.json()\n    # Get the top rated movie (assuming it is the first movie on the list)\n    top_rated_movie = data['results'][0]['title']\n    print(f\"The top rated movie is: {top_rated_movie}\")\nelse:\n    print(\"Error in API request\")\n\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/top_rated"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/top_rated",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar"
+        ]
+    },
+    {
+        "query": "What is the release date of the movie \"The Matrix\"?",
+        "results": "```python\nimport requests\n\n# Define the headers required to access the API\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"The Matrix\" to get its ID\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"The Matrix\"\n}\n\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\nmatrix_id = search_results['results'][0]['id']\n\n# Use the movie ID to get the release dates for the movie\nrelease_date_url = f\"https://api.themoviedb.org/3/movie/{matrix_id}/release_dates\"\n\nrelease_date_response = requests.get(release_date_url, headers=headers)\nrelease_date_results = release_date_response.json()\n\n# Extract the release date of the movie \"The Matrix\"\nfor result in release_date_results['results']:\n    if result['iso_3166_1'] == 'US':\n        release_date = result['release_dates'][0]['release_date']\n        break\n\nprint(\"The release date of the movie 'The Matrix' is:\", release_date)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates",
+            "GET https://api.themoviedb.org/3/movie/latest"
+        ]
+    },
+    {
+        "query": "Who is the most popular person?",
+        "results": "```python\nimport requests\n\n# API url for getting popular people list\nurl = \"https://api.themoviedb.org/3/person/popular\"\n\n# Set the page parameter to get the first page of results\nparams = {\n    \"page\": 1\n}\n\n# Set the authorization header\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Call the API\nresponse = requests.get(url, headers=headers, params=params)\n\n# Get the response in JSON format\ndata = response.json()\n\n# Extract the most popular person from the results\nmost_popular_person = max(data[\"results\"], key=lambda x: x[\"popularity\"])\n\nprint(\"The most popular person is:\", most_popular_person[\"name\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/person/popular"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/person/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}"
+        ]
+    },
+    {
+        "query": "Give me some cover images of movies directed by Christopher Nolan.",
+        "results": "```python\nimport requests\n\n# Api key is provided in headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for Christopher Nolan\nsearch_url = \"https://api.themoviedb.org/3/search/person\"\nsearch_params = {\n    \"query\": \"Christopher Nolan\",\n    \"include_adult\": False\n}\n\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\nnolan_id = search_results[\"results\"][0][\"id\"]\n\n# Get movie credits for Christopher Nolan\ncredits_url = f\"https://api.themoviedb.org/3/person/{nolan_id}/movie_credits\"\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_results = credits_response.json()\n\n# Extract movie ids directed by Christopher Nolan\nnolan_movie_ids = []\nfor movie in credits_results[\"crew\"]:\n    if movie[\"job\"] == \"Director\":\n        nolan_movie_ids.append(movie[\"id\"])\n\n# Get cover images of movies directed by Christopher Nolan\ncover_images = []\nfor movie_id in nolan_movie_ids:\n    images_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/images\"\n    images_params = {\n        \"include_image_language\": \"en\"\n    }\n    images_response = requests.get(images_url, headers=headers, params=images_params)\n    images_results = images_response.json()\n    movie_posters = images_results[\"posters\"]\n    if movie_posters:\n        cover_images.append(movie_posters[0][\"file_path\"])\n\nprint(cover_images)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ]
+    },
+    {
+        "query": "What are some common keywords associated with movie \"Titanic\"?",
+        "results": "```python\nimport requests\n\n# Define the API url for searching the movie\nurl_search = \"https://api.themoviedb.org/3/search/movie\"\n# Define the parameters for searching the movie \"Titanic\"\nparams_search = {\n    \"query\": \"Titanic\",\n    \"include_adult\": False\n}\n\n# Make the API request to search for the movie \"Titanic\"\nresponse_search = requests.get(url_search, headers=headers, params=params_search)\ndata_search = response_search.json()\n\n# Extract the movie_id of the movie \"Titanic\"\nmovie_id = data_search[\"results\"][0][\"id\"]\n\n# Define the API url for getting keywords of the movie\nurl_keywords = f\"https://api.themoviedb.org/3/movie/{movie_id}/keywords\"\n\n# Make the API request to get the keywords of the movie \"Titanic\"\nresponse_keywords = requests.get(url_keywords, headers=headers)\ndata_keywords = response_keywords.json()\n\n# Extract and print the list of keywords associated with the movie \"Titanic\"\nkeywords_list = [keyword[\"name\"] for keyword in data_keywords[\"keywords\"]]\nprint(keywords_list)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ]
+    },
+    {
+        "query": "Give me a show that is currently on the air",
+        "results": "```python\nimport requests\n\n# Headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# API url for shows on the air\nurl = \"https://api.themoviedb.org/3/tv/on_the_air\"\n\n# Define the parameters for the request\nparams = {\n    \"page\": 1  # Specify the page number to query\n}\n\n# Make the API request\nresponse = requests.get(url, headers=headers, params=params)\n\n# Parse the JSON response\ndata = response.json()\n\n# Display the result\nprint(data)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
+            "GET https://api.themoviedb.org/3/movie/now_playing",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/images"
+        ]
+    },
+    {
+        "query": "When is Clint Eastwood's latest movie scheduled to be released?",
+        "results": "```python\nimport requests\n\n# Define the API url to search for Clint Eastwood\nurl = \"https://api.themoviedb.org/3/search/person\"\n# Define the parameters for searching Clint Eastwood\nparams = {\n    \"query\": \"Clint Eastwood\",\n    \"include_adult\": False\n}\n# Make a GET request to search for Clint Eastwood\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\n\n# Get the person_id of Clint Eastwood\nperson_id = data['results'][0]['id']\n\n# Define the API url to get movie credits of Clint Eastwood\nurl_movie_credits = f\"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\n# Make a GET request to get the movie credits of Clint Eastwood\nresponse_movie_credits = requests.get(url_movie_credits, headers=headers)\ndata_movie_credits = response_movie_credits.json()\n\n# Get the latest movie of Clint Eastwood\nlatest_movie = data_movie_credits['cast'][0]['release_date']\n\nprint(f\"The latest movie of Clint Eastwood is scheduled to be released on: {latest_movie}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates"
+        ]
+    },
+    {
+        "query": "Give me some movie reviews about The Dark Knight",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for 'The Dark Knight' movie\nurl_search_movie = \"https://api.themoviedb.org/3/search/movie\"\nparams_search_movie = {\n    \"query\": \"The Dark Knight\",\n    \"include_adult\": \"false\"\n}\nresponse_search_movie = requests.get(url_search_movie, headers=headers, params=params_search_movie)\ndata_search_movie = response_search_movie.json()\n\n# Get the movie id of 'The Dark Knight'\nmovie_id = data_search_movie['results'][0]['id']\n\n# Get the reviews for 'The Dark Knight'\nurl_movie_reviews = f\"https://api.themoviedb.org/3/movie/{movie_id}/reviews\"\nparams_movie_reviews = {\n    \"page\": 1\n}\nresponse_movie_reviews = requests.get(url_movie_reviews, headers=headers, params=params_movie_reviews)\ndata_movie_reviews = response_movie_reviews.json()\n\n# Print the reviews\nfor review in data_movie_reviews['results']:\n    print(f\"Author: {review['author']}\")\n    print(f\"Content: {review['content']}\\n\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews",
+            "GET https://api.themoviedb.org/3/tv/popular"
+        ]
+    },
+    {
+        "query": "What are some movies that are similar to one of the movies directed by Francis Ford Coppola?",
+        "results": "```python\nimport requests\n\n# Define the API endpoint for searching a person\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\n\n# Define the API endpoint for getting movie credits of a person\nmovie_credits_url = \"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\n\n# Define the API endpoint for getting similar movies\nsimilar_movies_url = \"https://api.themoviedb.org/3/movie/{movie_id}/similar\"\n\n# Define the headers for API authentication\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for Francis Ford Coppola\nparams = {\"query\": \"Francis Ford Coppola\"}\nresponse = requests.get(search_person_url, headers=headers, params=params)\nperson_id = response.json()[\"results\"][0][\"id\"]\n\n# Get movie credits of Francis Ford Coppola\nmovie_credits_url = movie_credits_url.format(person_id=person_id)\nresponse = requests.get(movie_credits_url, headers=headers)\nmovie_id = response.json()[\"cast\"][0][\"id\"]\n\n# Get similar movies to the movie directed by Francis Ford Coppola\nsimilar_movies_url = similar_movies_url.format(movie_id=movie_id)\nresponse = requests.get(similar_movies_url, headers=headers)\nsimilar_movies = response.json()[\"results\"]\n\n# Extract relevant information from the similar movies\nsimilar_movies_list = []\nfor movie in similar_movies:\n    similar_movies_list.append({\n        \"title\": movie[\"title\"],\n        \"release_date\": movie[\"release_date\"],\n        \"overview\": movie[\"overview\"]\n    })\n\n# Print the list of similar movies\nfor movie in similar_movies_list:\n    print(\"Title:\", movie[\"title\"])\n    print(\"Release Date:\", movie[\"release_date\"])\n    print(\"Overview:\", movie[\"overview\"])\n    print(\"------------------------------\")\n```\n\nThis Python code performs the following steps:\n1. Search for the person \"Francis Ford Coppola\" using the API.\n2. Get the movie credits of Francis Ford Coppola to find a movie directed by him.\n3. Get a list of similar movies to the movie directed by Francis Ford Coppola.\n4. Extract and print the relevant information about the similar movies.",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar"
+        ]
+    },
+    {
+        "query": "Who is the lead actor in the latest released movie?",
+        "results": "```python\nimport requests\n\n# Define the API url for getting the latest movie\nurl_latest_movie = \"https://api.themoviedb.org/3/movie/latest\"\n\n# Define the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the GET request to get the details of the latest movie\nresponse_latest_movie = requests.get(url_latest_movie, headers=headers)\n\n# Check if the response is successful\nif response_latest_movie.status_code == 200:\n    latest_movie_data = response_latest_movie.json()\n    # Get the cast details of the latest movie\n    movie_id = latest_movie_data['id']\n    \n    # Define the API url for getting the credits of the latest movie\n    url_movie_credits = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\n\n    # Make the GET request to get the credits of the latest movie\n    response_movie_credits = requests.get(url_movie_credits, headers=headers)\n    \n    # Check if the response is successful\n    if response_movie_credits.status_code == 200:\n        movie_credits_data = response_movie_credits.json()\n        lead_actor = movie_credits_data['cast'][0]['name']\n        print(f\"The lead actor in the latest released movie is: {lead_actor}\")\n    else:\n        print(\"Failed to fetch movie credits data.\")\nelse:\n    print(\"Failed to fetch latest movie data.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/latest",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/latest",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/latest"
+        ]
+    },
+    {
+        "query": "give me one image of the movie that is currently showing in theaters",
+        "results": "```python\nimport requests\n\n# Define the API endpoint to get a list of movies in theaters\nurl = \"https://api.themoviedb.org/3/movie/now_playing\"\n\n# Define the parameters for the API request (page=1 by default)\nparams = {\n    \"page\": 1\n}\n\n# Define the headers with the bearer token for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Send the GET request to the API endpoint\nresponse = requests.get(url, headers=headers, params=params)\n\n# Parse the JSON response\ndata = response.json()\n\n# Get the poster path of the first movie in the list\nposter_path = data['results'][0]['poster_path']\n\n# Print the image URL\nimage_url = f\"https://image.tmdb.org/t/p/w500/{poster_path}\"\nprint(image_url)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/now_playing",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/now_playing",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ]
+    },
+    {
+        "query": "What is the most popular movie right now and what is its keywords?",
+        "results": "```python\nimport requests\n\n# Define the headers for the API request\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# 1. Get a list of popular movies\nurl_popular_movies = \"https://api.themoviedb.org/3/movie/popular\"\nparams_popular_movies = {\"page\": 1, \"region\": \"US\"}\nresponse_popular_movies = requests.get(url_popular_movies, headers=headers, params=params_popular_movies)\ndata_popular_movies = response_popular_movies.json()\n\n# Extract the id of the most popular movie\nmost_popular_movie_id = data_popular_movies['results'][0]['id']\n\n# 2. Get the keywords of the most popular movie\nurl_keywords = f\"https://api.themoviedb.org/3/movie/{most_popular_movie_id}/keywords\"\nresponse_keywords = requests.get(url_keywords, headers=headers)\ndata_keywords = response_keywords.json()\n\n# Output the most popular movie and its keywords\nprint(\"Most popular movie right now:\")\nprint(data_popular_movies['results'][0]['title'])\nprint(\"Keywords:\")\nfor keyword in data_keywords['keywords']:\n    print(keyword['name'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/popular",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/popular",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}"
+        ]
+    },
+    {
+        "query": "What are the keywords of the most popular movie right now",
+        "results": "```python\nimport requests\n\n# HTTP headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the list of popular movies\nurl = \"https://api.themoviedb.org/3/movie/popular\"\nparams = {\n    \"api_key\": \"<YOUR_API_KEY>\"\n}\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\n\n# Get the id of the most popular movie\nmost_popular_movie_id = data[\"results\"][0][\"id\"]\n\n# Get the keywords of the most popular movie\nurl_keywords = f\"https://api.themoviedb.org/3/movie/{most_popular_movie_id}/keywords\"\nresponse_keywords = requests.get(url_keywords, headers=headers)\nkeywords_data = response_keywords.json()\n\n# Extract and print the keywords of the most popular movie\nkeywords = [keyword[\"name\"] for keyword in keywords_data[\"keywords\"]]\nprint(keywords)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/movie/popular",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/movie/popular",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ]
+    },
+    {
+        "query": "Who has starred in a movie \"Titanic\"",
+        "results": "```python\nimport requests\n\n# Define the API endpoints\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\ncredits_url = \"https://api.themoviedb.org/3/movie/{}/credits\"\n\n# Define the headers with authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"Titanic\"\nsearch_params = {\n    \"query\": \"Titanic\",\n    \"include_adult\": False\n}\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Get the movie ID of \"Titanic\"\nif search_results[\"total_results\"] > 0:\n    movie_id = search_results[\"results\"][0][\"id\"]\n\n    # Get the credits (cast and crew) for the movie with the obtained movie ID\n    credits_response = requests.get(credits_url.format(movie_id), headers=headers)\n    credits_results = credits_response.json()\n\n    # Extract the cast from the credits results\n    cast_list = credits_results[\"cast\"]\n    \n    # Extract the names of the actors who starred in the movie \"Titanic\"\n    actors_in_titanic = [actor[\"name\"] for actor in cast_list]\n    \n    print(\"Actors in Titanic:\", actors_in_titanic)\nelse:\n    print(\"Movie Titanic not found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "What do the logo looks like for Paramount Pictures?",
+        "results": "```python\nimport requests\n\n# HTTP headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the company id for Paramount Pictures (it is 4)\ncompany_id = 4\n\n# Call the company details API\nurl_company_details = f\"https://api.themoviedb.org/3/company/{company_id}\"\nresponse_company_details = requests.get(url_company_details, headers=headers)\ncompany_details = response_company_details.json()\n\n# Get the logo path for Paramount Pictures\nlogo_path = company_details[\"logo_path\"]\nprint(\"Logo path for Paramount Pictures:\", logo_path)\n\n# Call the company images API to get the logo itself\nurl_company_images = f\"https://api.themoviedb.org/3/company/{company_id}/images\"\nresponse_company_images = requests.get(url_company_images, headers=headers)\ncompany_images = response_company_images.json()\n\n# Display the logo image information\nlogo_info = company_images[\"logos\"][0]  # Assuming the first entry contains the logo\nlogo_aspect_ratio = logo_info[\"aspect_ratio\"]\nlogo_file_path = logo_info[\"file_path\"]\nprint(\"Logo Aspect Ratio:\", logo_aspect_ratio)\nprint(\"Logo File Path:\", logo_file_path)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/company/{company_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/company/{company_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
+        ]
+    },
+    {
+        "query": "tell me where the company \"universal pictures\" was founded?",
+        "results": "```python\nimport requests\n\n# Define the API url to search for companies\nurl_search_company = \"https://api.themoviedb.org/3/search/company\"\n\n# Define the parameters for the search query\nparams = {\n    \"query\": \"universal pictures\"\n}\n\n# Make a GET request to search for the company\nresponse_search_company = requests.get(url_search_company, headers=headers, params=params)\ndata_search_company = response_search_company.json()\n\n# Check if there are any results for the search\nif data_search_company[\"total_results\"] > 0:\n    # Get the id of the company \"universal pictures\"\n    company_id_universal = data_search_company[\"results\"][0][\"id\"]\n\n    # Define the API url to get the details of a specific company by id\n    url_company_details = f\"https://api.themoviedb.org/3/company/{company_id_universal}\"\n\n    # Make a GET request to get the details of the company\n    response_company_details = requests.get(url_company_details, headers=headers)\n    data_company_details = response_company_details.json()\n\n    # Retrieve the headquarters of the company \"universal pictures\"\n    headquarters_universal = data_company_details[\"headquarters\"]\n    \n    print(\"Universal Pictures was founded in:\", headquarters_universal)\nelse:\n    print(\"Company 'Universal Pictures' not found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/company",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/company",
+            "GET https://api.themoviedb.org/3/company/{company_id}",
+            "GET https://api.themoviedb.org/3/tv/on_the_air"
+        ]
+    },
+    {
+        "query": "When is the movie \"Titanic\" released?",
+        "results": "```python\nimport requests\n\n# Define the headers containing the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"Titanic\"\nurl_search_movie = \"https://api.themoviedb.org/3/search/movie\"\nparams_search_movie = {\n    \"query\": \"Titanic\"\n}\nresponse_search_movie = requests.get(url_search_movie, headers=headers, params=params_search_movie)\ndata_search_movie = response_search_movie.json()\n\n# Extract the movie_id for \"Titanic\"\nmovie_id = data_search_movie[\"results\"][0][\"id\"]\n\n# Get the release date for the movie \"Titanic\"\nurl_release_dates = f\"https://api.themoviedb.org/3/movie/{movie_id}/release_dates\"\nresponse_release_dates = requests.get(url_release_dates, headers=headers)\ndata_release_dates = response_release_dates.json()\n\n# Extract and print the release date and certification for \"Titanic\"\nrelease_dates = data_release_dates[\"results\"]\nfor release in release_dates:\n    release_date = release[\"release_dates\"][0][\"release_date\"]\n    certification = release[\"release_dates\"][0][\"certification\"]\n    print(f\"The movie Titanic was released on {release_date} with certification: {certification}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie ",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie ",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ]
+    },
+    {
+        "query": "Who has starred in the first movie of Star Wars collection?",
+        "results": "```python\nimport requests\n\n# Define the API key\napi_key = \"0dbab590c7eaca07ebe625974a37ad92\"\n\n# Define the base URL for the TMDB API\nbase_url = \"https://api.themoviedb.org/3\"\n\n# Define the headers with the API key\nheaders = {\n    \"Authorization\": f\"Bearer {api_key}\"\n}\n\n# Search for the Star Wars collection to get the collection ID\nsearch_collection_url = f\"{base_url}/search/collection\"\nsearch_collection_params = {\n    \"query\": \"Star Wars\"\n}\nresponse = requests.get(search_collection_url, headers=headers, params=search_collection_params)\ncollection_id = response.json()[\"results\"][0][\"id\"]  # Get the collection ID of the first result\n\n# Get the details of the first movie in the Star Wars collection\ncollection_details_url = f\"{base_url}/collection/{collection_id}\"\nresponse = requests.get(collection_details_url, headers=headers)\nmovie_parts = response.json()[\"parts\"]\n\n# Get the cast of the first movie in the collection\nmovie_id = movie_parts[0][\"id\"]\nmovie_credits_url = f\"{base_url}/movie/{movie_id}/credits\"\nresponse = requests.get(movie_credits_url, headers=headers)\ncast = response.json()[\"cast\"]\n\n# Extract the names of the actors from the cast\nactors = [actor[\"name\"] for actor in cast]\n\n# Print out the list of actors who starred in the first movie of the Star Wars collection\nprint(\"Actors who starred in the first movie of Star Wars collection:\")\nfor actor in actors:\n    print(actor)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ]
+    },
+    {
+        "query": "give me a movie cover of a movie from the collection Harry Potter",
+        "results": "```python\nimport requests\n\n# API url to search for collections\nurl_search_collection = \"https://api.themoviedb.org/3/search/collection\"\n\n# Parameters for searching Harry Potter collection\nparams_search_collection = {\n    \"query\": \"Harry Potter\"\n}\n\n# Making a GET request to search for the Harry Potter collection\nresponse_search_collection = requests.get(url_search_collection, headers=headers, params=params_search_collection)\ndata_search_collection = response_search_collection.json()\n\n# Extracting the collection id for the Harry Potter collection\ncollection_id = data_search_collection['results'][0]['id']\n\n# API url to get details of a collection by id\nurl_get_collection = f\"https://api.themoviedb.org/3/collection/{collection_id}\"\n\n# Making a GET request to get details of the Harry Potter collection\nresponse_get_collection = requests.get(url_get_collection, headers=headers)\ndata_collection_details = response_get_collection.json()\n\n# Extracting the poster_path of the first part of the Harry Potter collection\nposter_path = data_collection_details['parts'][0]['poster_path']\n\nprint(f\"Poster path for the first part of Harry Potter collection: {poster_path}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ]
+    },
+    {
+        "query": "What are some keywords for a movie of the collection The Hunger Games?",
+        "results": "```python\nimport requests\n\n# Define the API url to get collection ID for \"The Hunger Games\"\nsearch_collection_url = \"https://api.themoviedb.org/3/search/collection\"\nparams = {\n    \"query\": \"The Hunger Games\"\n}\n\n# Call the search collection API to get the collection ID\nresponse = requests.get(search_collection_url, headers=headers, params=params)\ncollection_id = response.json()[\"results\"][0][\"id\"]\n\n# Define the API url to get keywords for a movie in the collection\nkeywords_url = f\"https://api.themoviedb.org/3/collection/{collection_id}/keywords\"\n\n# Call the API to get keywords for a movie of the collection \"The Hunger Games\"\nresponse = requests.get(keywords_url, headers=headers)\nkeywords = response.json()[\"keywords\"]\n\n# Extract and print the keywords\nfor keyword in keywords:\n    print(keyword[\"name\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ]
+    },
+    {
+        "query": "When are the release dates for the movies of the collection The Hobbit?",
+        "results": "```python\nimport requests\n\n# Define the API endpoints\nsearch_collection_url = \"https://api.themoviedb.org/3/search/collection\"\ncollection_details_url = \"https://api.themoviedb.org/3/collection/{collection_id}\"\ntv_similar_url = \"https://api.themoviedb.org/3/tv/{tv_id}/similar\"\n\n# Set the API key\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the collection by name\nsearch_params = {\"query\": \"The Hobbit\"}\nsearch_response = requests.get(search_collection_url, headers=headers, params=search_params)\ncollection_id = search_response.json()[\"results\"][0][\"id\"]\n\n# Get the details of the collection\ncollection_details_response = requests.get(collection_details_url.format(collection_id=collection_id), headers=headers)\ncollection_parts = collection_details_response.json()[\"parts\"]\n\n# Extract release dates of the movies in the collection\nrelease_dates = []\nfor part in collection_parts:\n    release_dates.append(part[\"release_date\"])\n    \nprint(release_dates)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar"
+        ]
+    },
+    {
+        "query": "List movies from The Fast and the Furious collection",
+        "results": "```python\nimport requests\n\n# Set the API url\nurl = \"https://api.themoviedb.org/3/search/collection\"\n\n# Set the parameters\nparams = {\n    \"query\": \"The Fast and the Furious\"\n}\n\n# Set the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the API request\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    data = response.json()\n    # Extract movie details from the response\n    movies = []\n    for result in data[\"results\"]:\n        movies.append(result[\"name\"])\n    print(movies)\nelse:\n    print(\"Unable to fetch data\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ]
+    },
+    {
+        "query": "Give me a review of a movie from the collection The Fast and the Furious.",
+        "results": "```python\nimport requests\n\n# Define the API endpoint to search for collections\nurl_search_collection = \"https://api.themoviedb.org/3/search/collection\"\n\n# Set the headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Set the query parameter to search for the collection The Fast and the Furious\nparams_search_collection = {\n    \"query\": \"The Fast and the Furious\",\n}\n\n# Call the API to search for collections\nresponse_search_collection = requests.get(url_search_collection, headers=headers, params=params_search_collection)\ndata_search_collection = response_search_collection.json()\n\n# Extract the collection ID for The Fast and the Furious\ncollection_id = data_search_collection['results'][0]['id']\n\n# Define the API endpoint to get reviews of a movie from the collection by collection ID\nurl_movie_reviews = f\"https://api.themoviedb.org/3/collection/{collection_id}/reviews\"\n\n# Set the query parameter to specify the page for movie reviews\nparams_movie_reviews = {\n    \"page\": 1,\n}\n\n# Call the API to get reviews of a movie from the collection\nresponse_movie_reviews = requests.get(url_movie_reviews, headers=headers, params=params_movie_reviews)\ndata_movie_reviews = response_movie_reviews.json()\n\n# Print the reviews of a movie from the collection The Fast and the Furious\nfor review in data_movie_reviews['results']:\n    print(f\"Author: {review['author']}\")\n    print(f\"Content: {review['content']}\")\n    print(\"--------\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ]
+    },
+    {
+        "query": "When was the first movie of the collection Lord of the Rings released?",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for the collection ID of Lord of the Rings\nsearch_url = \"https://api.themoviedb.org/3/search/collection\"\nsearch_params = {\n    \"query\": \"Lord of the Rings\",\n    \"page\": 1\n}\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\ncollection_id = search_response.json()[\"results\"][0][\"id\"]\n\n# Step 2: Get details of the collection Lord of the Rings\ncollection_url = f\"https://api.themoviedb.org/3/collection/{collection_id}\"\ncollection_response = requests.get(collection_url, headers=headers)\nmovies = collection_response.json()[\"parts\"]\n\n# Step 3: Find the release date of the first movie in the collection\nrelease_date = movies[0][\"release_date\"]\n\nprint(f\"The first movie of the collection Lord of the Rings was released on: {release_date}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "tell me the directors of the first season of House of Cards",
+        "results": "```python\nimport requests\n\n# Define the API url for searching TV shows\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the API url for getting credits of a TV show season\nurl_tv_credits = \"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits\"\n\n# Define the API url for getting a list of TV shows airing today\nurl_airing_today = \"https://api.themoviedb.org/3/tv/airing_today\"\n\n# Set the API key in the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show 'House of Cards'\nparams_search_tv = {\n    \"query\": \"House of Cards\"\n}\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ntv_show_id = response_search_tv.json()[\"results\"][0][\"id\"]\n\n# Get the credits for the first season of House of Cards\nseason_number = 1\nurl_tv_credits = url_tv_credits.format(tv_id=tv_show_id, season_number=season_number)\nresponse_tv_credits = requests.get(url_tv_credits, headers=headers)\n\n# Extract the director(s) from the crew\ncrew = response_tv_credits.json()[\"crew\"]\ndirectors = [member[\"name\"] for member in crew if member[\"job\"] == \"Director\"]\n\n# Output the directors of the first season of House of Cards\nprint(\"Directors of the first season of House of Cards:\", directors)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits",
+            "GET https://api.themoviedb.org/3/tv/airing_today"
+        ]
+    },
+    {
+        "query": "I want some tv shows that similar to House of Cards",
+        "results": "```python\nimport requests\n\n# API url to search for TV shows\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# API url to get similar TV shows\nurl_similar_tv = \"https://api.themoviedb.org/3/tv/{tv_id}/similar\"\n\n# API url to discover TV shows\nurl_discover_tv = \"https://api.themoviedb.org/3/discover/tv\"\n\n# Set the headers with the access token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show \"House of Cards\"\nparams_search_tv = {\n    \"query\": \"House of Cards\"\n}\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ndata_search_tv = response_search_tv.json()\n\n# Get the ID of the TV show \"House of Cards\"\ntv_id = data_search_tv[\"results\"][0][\"id\"]\n\n# Get a list of similar TV shows to \"House of Cards\"\nparams_similar_tv = {\n    \"page\": 1\n}\nresponse_similar_tv = requests.get(url_similar_tv.format(tv_id=tv_id), headers=headers, params=params_similar_tv)\ndata_similar_tv = response_similar_tv.json()\nsimilar_tv_shows = data_similar_tv[\"results\"]\n\n# Output the list of similar TV shows\nprint(similar_tv_shows)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar",
+            "GET https://api.themoviedb.org/3/discover/tv"
+        ]
+    },
+    {
+        "query": "When did the most popular TV show currently on the air start?",
+        "results": "```python\nimport requests\n\n# Define the API url to get the list of shows that are currently on the air\nurl = \"https://api.themoviedb.org/3/tv/on_the_air\"\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Send a GET request to the API to get the list of shows currently on the air\nresponse = requests.get(url, headers=headers)\ndata = response.json()\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Get the first show in the list (assuming sorted by popularity)\n    most_popular_show = data[\"results\"][0]\n    show_name = most_popular_show[\"name\"]\n    first_air_date = most_popular_show[\"first_air_date\"]\n    \n    print(f\"The most popular TV show currently on the air is '{show_name}', which started airing on {first_air_date}\")\nelse:\n    print(\"Failed to retrieve data from the API\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/tv/airing_today"
+        ]
+    },
+    {
+        "query": "tell me a few more works directed by the director of Django Unchained",
+        "results": "```python\nimport requests\n\n# Define the API URLs\nsearch_movie_url = \"https://api.themoviedb.org/3/search/movie\"\nmovie_credits_url = \"https://api.themoviedb.org/3/person/{person_id}/movie_credits\"\n\n# Define the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"Django Unchained\"\nquery = \"Django Unchained\"\nparams = {\"query\": query}\nresponse = requests.get(search_movie_url, headers=headers, params=params)\ndjangounchained_id = response.json()[\"results\"][0][\"id\"]\n\n# Get the credits for the director of Django Unchained\nresponse = requests.get(movie_credits_url.format(person_id=djangounchained_id), headers=headers)\ncredits = response.json()\n\n# Extract the director's name\ndirector_name = None\nfor crew in credits[\"crew\"]:\n    if crew[\"job\"] == \"Director\":\n        director_name = crew[\"name\"]\n        break\n\n# Get the credits for the director\nresponse = requests.get(movie_credits_url.format(person_id=credits[\"id\"]), headers=headers)\ndirector_credits = response.json()\n\n# Extract a few more works directed by the director of Django Unchained\nworks = []\nfor movie in director_credits[\"crew\"]:\n    if movie[\"job\"] == \"Director\" and movie[\"id\"] != djangounchained_id:\n        works.append(movie[\"title\"])\n\nprint(works)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ]
+    },
+    {
+        "query": "tell me the cast of a TV show on the air",
+        "results": "```python\nimport requests\n\n# API url to get list of TV shows on the air\nurl_on_the_air = \"https://api.themoviedb.org/3/tv/on_the_air\"\n\n# Parameter for the API request (page 1)\nparams_on_the_air = {\"page\": 1}\n\n# Requesting the API to get a list of TV shows on the air\nresponse_on_the_air = requests.get(url_on_the_air, headers=headers, params=params_on_the_air)\n\n# Getting the TV show id of the first show on the list\ntv_id = response_on_the_air.json()[\"results\"][0][\"id\"]\n\n# API url to get the credits (cast) of a TV show\nurl_credits = f\"https://api.themoviedb.org/3/tv/{tv_id}/credits\"\n\n# Requesting the API to get the credits (cast) of the selected TV show\nresponse_credits = requests.get(url_credits, headers=headers)\n\n# Getting the cast of the TV show\ncast = response_credits.json()[\"cast\"]\n\n# Displaying the cast of the TV show\nfor person in cast:\n    print(person[\"name\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
+        ]
+    },
+    {
+        "query": "I need a review for Breaking Bad",
+        "results": "```python\nimport requests\n\n# Define the API url for searching for a TV show\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the API url for getting reviews for a specific TV show\nurl_tv_reviews = \"https://api.themoviedb.org/3/tv/{tv_id}/reviews\"\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for a TV show to get its ID\nparams_search_tv = {\n    \"query\": \"Breaking Bad\"  # Search query for Breaking Bad\n}\n\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ntv_id = response_search_tv.json()[\"results\"][0][\"id\"]  # Get the ID of the first result\n\n# Get reviews for the TV show with the obtained ID\nparams_tv_reviews = {\n    \"page\": 1\n}\n\nurl_tv_reviews = url_tv_reviews.format(tv_id=tv_id)\nresponse_tv_reviews = requests.get(url_tv_reviews, headers=headers, params=params_tv_reviews)\n\n# Display the reviews\nreviews = response_tv_reviews.json()[\"results\"]\nfor review in reviews:\n    print(\"Author:\", review[\"author\"])\n    print(\"Content:\", review[\"content\"])\n    print(\"URL:\", review[\"url\"])\n    print(\"----\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ]
+    },
+    {
+        "query": "I'm watching the tv series The Last Of Us and I need some more recommendations",
+        "results": "```python\nimport requests\n\n# Define the API urls\nsearch_tv_url = \"https://api.themoviedb.org/3/search/tv\"\nget_recommendations_url = \"https://api.themoviedb.org/3/tv/{tv_id}/recommendations\"\n\n# Set the API key and headers\napi_key = \"0dbab590c7eaca07ebe625974a37ad92\"\nheaders = {\n    \"Authorization\": f\"Bearer {api_key}\"\n}\n\n# Search for the TV show 'The Last Of Us'\nparams = {\n    \"query\": \"The Last Of Us\",\n    \"include_adult\": False\n}\nresponse = requests.get(search_tv_url, headers=headers, params=params)\ndata = response.json()\n\n# Get the TV show id of 'The Last Of Us'\ntv_id = data['results'][0]['id']\n\n# Get recommendations for 'The Last Of Us'\nparams = {\n    \"page\": 1\n}\nurl = get_recommendations_url.format(tv_id=tv_id)\nresponse = requests.get(url, headers=headers, params=params)\nrecommendations = response.json()\n\n# Print the recommendations\nfor result in recommendations['results']:\n    print(result['name'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ]
+    },
+    {
+        "query": "I'm watching a TV show called The Last Of Us and I need some more recommendations",
+        "results": "```python\nimport requests\n\n# API url for searching TV shows\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# API url for getting recommendations for a TV show\nurl_tv_recommendations = \"https://api.themoviedb.org/3/tv/{tv_id}/recommendations\"\n\n# API url for getting upcoming movies\nurl_upcoming_movies = \"https://api.themoviedb.org/3/movie/upcoming\"\n\n# API key (Authorization)\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for The Last Of Us TV show\nparams_search_tv = {\n    \"query\": \"The Last Of Us\",\n    \"page\": 1,\n    \"include_adult\": False\n}\nresponse = requests.get(url_search_tv, headers=headers, params=params_search_tv)\n\nif response.status_code == 200:\n    tv_results = response.json()[\"results\"]\n    if len(tv_results) > 0:\n        # Get the TV show ID for The Last Of Us\n        tv_id = tv_results[0][\"id\"]\n        \n        # Get recommendations for The Last Of Us\n        params_tv_recommendations = {\n            \"tv_id\": tv_id,\n            \"page\": 1\n        }\n        response_recommendations = requests.get(url_tv_recommendations.format(tv_id=tv_id), headers=headers, params=params_tv_recommendations)\n        \n        if response_recommendations.status_code == 200:\n            recommendations = response_recommendations.json()[\"results\"]\n            print(\"Recommendations for The Last Of Us:\")\n            for recommendation in recommendations:\n                print(recommendation[\"name\"])\n        else:\n            print(\"Error getting TV show recommendations.\")\n    else:\n        print(\"TV show The Last Of Us not found.\")\nelse:\n    print(\"Error searching for TV show The Last Of Us.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations",
+            "GET https://api.themoviedb.org/3/movie/upcoming"
+        ]
+    },
+    {
+        "query": "tell me the guest star from season 3, episode 24 of Friends",
+        "results": "```python\nimport requests\n\n# Define the API endpoints\nsearch_tv_url = \"https://api.themoviedb.org/3/search/tv\"\ncredits_url = \"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits\"\nkeywords_url = \"https://api.themoviedb.org/3/tv/{tv_id}/keywords\"\n\n# Headers for API authentication\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show \"Friends\"\nsearch_params = {\n    \"query\": \"Friends\",\n    \"include_adult\": \"false\"\n}\nresponse = requests.get(search_tv_url, headers=headers, params=search_params)\ndata = response.json()\n\n# Get the TV show ID for \"Friends\"\ntv_id = data['results'][0]['id']\n\n# Get the credits for season 3, episode 24 of \"Friends\"\nepisode_credits_url = credits_url.format(tv_id=tv_id, season_number=3, episode_number=24)\nresponse_credits = requests.get(episode_credits_url, headers=headers)\ncredits_data = response_credits.json()\n\n# Extract the guest stars from the credits\nguest_stars = credits_data.get('guest_stars', [])\nfor star in guest_stars:\n    print(star['name'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords"
+        ]
+    },
+    {
+        "query": "Who is the lead actor in the most popular TV show?",
+        "results": "```python\nimport requests\n\n# API endpoint to get a list of the current popular TV shows\nurl_popular_tv = \"https://api.themoviedb.org/3/tv/popular\"\n\n# API endpoint to get the credits for a TV show\nurl_tv_credits = \"https://api.themoviedb.org/3/tv/{}/credits\"\n\n# Headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the list of current popular TV shows\nparams_popular_tv = {\n    \"page\": 1\n}\nresponse_popular_tv = requests.get(url_popular_tv, headers=headers, params=params_popular_tv)\ndata_popular_tv = response_popular_tv.json()\n\n# Get the TV show ID of the most popular TV show\nmost_popular_tv_id = data_popular_tv[\"results\"][0][\"id\"]\n\n# Get the credits for the most popular TV show\nurl_tv_credits = url_tv_credits.format(most_popular_tv_id)\nresponse_tv_credits = requests.get(url_tv_credits, headers=headers)\ndata_tv_credits = response_tv_credits.json()\n\n# Find the lead actor (first in the cast list) for the most popular TV show\nlead_actor = data_tv_credits[\"cast\"][0][\"name\"]\n\nprint(f\"The lead actor in the most popular TV show is: {lead_actor}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/on_the_air"
+        ]
+    },
+    {
+        "query": "give me a keyword of the top-1 rated TV show",
+        "results": "```python\nimport requests\n\n# Set the API url for getting the list of top rated TV shows\nurl_top_rated = \"https://api.themoviedb.org/3/tv/top_rated\"\n\n# Set the parameters to specify which page to query\nparams = {\n    \"page\": 1\n}\n\n# Make the request to get the list of top rated TV shows\nresponse_top_rated = requests.get(url_top_rated, headers=headers, params=params)\n\n# Get the TV show id of the top-1 rated TV show\ntop_rated_tv_id = response_top_rated.json()[\"results\"][0][\"id\"]\n\n# Set the API url for getting keywords of a TV show\nurl_keywords = f\"https://api.themoviedb.org/3/tv/{top_rated_tv_id}/keywords\"\n\n# Make the request to get the keywords of the top-1 rated TV show\nresponse_keywords = requests.get(url_keywords, headers=headers)\n\n# Get the keyword of the top-1 rated TV show\ntop_keyword = response_keywords.json()[\"results\"][0][\"name\"]\n\nprint(top_keyword)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/top_rated",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/top_rated",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ]
+    },
+    {
+        "query": "give me a poster of 2 Broke Girls",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/search/tv\"\n\n# Set the required parameters for the API\nparams = {\n    \"query\": \"2 Broke Girls\",\n    \"include_adult\": \"false\"\n}\n\n# Set the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make a GET request to the API\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    data = response.json()\n    # Extract the poster path of the first result\n    poster_path = data['results'][0]['poster_path']\n    print(\"Poster path:\", poster_path)\nelse:\n    print(\"Error:\", response.status_code)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/images",
+            "GET https://api.themoviedb.org/3/movie/now_playing"
+        ]
+    },
+    {
+        "query": "How many episodes does 2 Broke Girls have in total?",
+        "results": "```python\nimport requests\n\n# Set the API url for searching the TV show \"2 Broke Girls\"\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Set the parameters for searching the TV show \"2 Broke Girls\"\nparams_search_tv = {\n    \"query\": \"2 Broke Girls\",\n    \"include_adult\": False\n}\n\n# Make a GET request to search for the TV show \"2 Broke Girls\"\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\n\n# Get the TV show id of \"2 Broke Girls\" from the search results\ntv_id = response_search_tv.json()[\"results\"][0][\"id\"]\n\n# Set the API url for getting details of the TV show by id\nurl_tv_details = f\"https://api.themoviedb.org/3/tv/{tv_id}\"\n\n# Make a GET request to get details of the TV show by id\nresponse_tv_details = requests.get(url_tv_details, headers=headers)\n\n# Calculate the total number of episodes of the TV show \"2 Broke Girls\"\ntotal_episodes = sum([season[\"episode_count\"] for season in response_tv_details.json()[\"seasons\"]])\n\nprint(f\"The total number of episodes of 2 Broke Girls is: {total_episodes}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/movie/popular"
+        ]
+    },
+    {
+        "query": "When was the company that produced The Big Bang Theory founded?",
+        "results": "```python\nimport requests\n\n# Define the API url for searching TV shows\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the API url for getting TV show details by id\ntv_details_url = \"https://api.themoviedb.org/3/tv/1418\"  # 1418 is the id of The Big Bang Theory show\n\n# Define the API url for getting company details by id\ncompany_url = \"https://api.themoviedb.org/3/company/219\"\n\n# Define the headers for the API requests\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for The Big Bang Theory TV show\nparams = {\"query\": \"The Big Bang Theory\"}\nresponse = requests.get(search_url, headers=headers, params=params)\ntv_id = response.json()[\"results\"][0][\"id\"]\n\n# Get the production company id of The Big Bang Theory\nresponse = requests.get(tv_details_url, headers=headers)\ncompany_id = response.json()[\"production_companies\"][0][\"id\"]\n\n# Get the company details to find the founding date\nresponse = requests.get(company_url.format(company_id), headers=headers)\nfounding_date = response.json()[\"description\"]\n\nprint(\"The Big Bang Theory production company was founded in:\", founding_date)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "When was the TV show The Big Bang Theory created?",
+        "results": "```python\nimport requests\n\n# API url to search for TV shows\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Parameters for searching TV shows with the query \"The Big Bang Theory\"\nparams_search_tv = {\n    \"query\": \"The Big Bang Theory\",\n    \"page\": 1\n}\n\n# Make a GET request to search for TV shows\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\n\n# Get the TV show id of \"The Big Bang Theory\" from the search results\ntv_show_id = response_search_tv.json()[\"results\"][0][\"id\"]\n\n# API url to get details of a specific TV show by id\nurl_tv_details = f\"https://api.themoviedb.org/3/tv/{tv_show_id}\"\n\n# Make a GET request to get details of \"The Big Bang Theory\"\nresponse_tv_details = requests.get(url_tv_details, headers=headers)\n\n# Extract the first air date of \"The Big Bang Theory\"\nfirst_air_date = response_tv_details.json()[\"first_air_date\"]\n\nprint(\"The TV show 'The Big Bang Theory' was created on:\", first_air_date)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations"
+        ]
+    },
+    {
+        "query": "give me a keyword of the most popular TV show",
+        "results": "```python\nimport requests\n\n# HTTP headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Call the API to get a list of popular TV shows\nurl_popular_tv = \"https://api.themoviedb.org/3/tv/popular\"\nparams_popular_tv = {\"page\": 1}  # Get the first page of popular TV shows\nresponse_popular_tv = requests.get(url_popular_tv, headers=headers, params=params_popular_tv)\n\nif response_popular_tv.status_code == 200:\n    popular_tv_data = response_popular_tv.json()\n    \n    # Get the TV show id of the most popular TV show\n    most_popular_tv_id = popular_tv_data[\"results\"][0][\"id\"]\n    \n    # Call the API to get keywords of the most popular TV show\n    url_tv_keywords = f\"https://api.themoviedb.org/3/tv/{most_popular_tv_id}/keywords\"\n    response_tv_keywords = requests.get(url_tv_keywords, headers=headers)\n    \n    if response_tv_keywords.status_code == 200:\n        tv_keywords_data = response_tv_keywords.json()\n        \n        # Get the keyword of the most popular TV show\n        most_popular_tv_keyword = tv_keywords_data[\"results\"][0][\"name\"]\n        \n        print(f\"The keyword of the most popular TV show is: {most_popular_tv_keyword}\")\n    else:\n        print(\"Failed to fetch keywords data\")\nelse:\n    print(\"Failed to fetch popular TV data\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords",
+            "GET https://api.themoviedb.org/3/tv/on_the_air"
+        ]
+    },
+    {
+        "query": "What did the third episode of the second season of Westworld talk about?",
+        "results": "```python\nimport requests\n\n# API url for searching TV show\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# API url for getting TV episode details\nurl_episode_details = \"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}\"\n\n# API url for searching collection\nurl_search_collection = \"https://api.themoviedb.org/3/search/collection\"\n\n# Headers for API request\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show \"Westworld\" to get its ID\nparams_search_tv = {\n    \"query\": \"Westworld\",\n    \"include_adult\": False\n}\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ndata_search_tv = response_search_tv.json()\nwestworld_id = data_search_tv['results'][0]['id']  # Get the ID of the TV show \"Westworld\"\n\n# Get the details of the third episode of the second season of Westworld\nparams_episode_details = {\n    \"tv_id\": westworld_id,\n    \"season_number\": 2,\n    \"episode_number\": 3\n}\nresponse_episode_details = requests.get(url_episode_details.format(**params_episode_details), headers=headers)\ndata_episode_details = response_episode_details.json()\nepisode_summary = data_episode_details['overview']  # Get the overview of the episode\n\n# Output the summary of the third episode of the second season of Westworld\nprint(episode_summary)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}",
+            "GET https://api.themoviedb.org/3/search/collection"
+        ]
+    },
+    {
+        "query": "Tell me the air date of the second season of Game of Thrones",
+        "results": "```python\nimport requests\n\n# HTTP headers to call the API\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for TV show 'Game of Thrones' using the search API\nsearch_tv_url = \"https://api.themoviedb.org/3/search/tv\"\nsearch_params = {\n    \"query\": \"Game of Thrones\"\n}\nsearch_response = requests.get(search_tv_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Get the TV show id for 'Game of Thrones'\ngame_of_thrones_id = search_results['results'][0]['id']\n\n# Get the details of the second season of 'Game of Thrones'\nseason_details_url = f\"https://api.themoviedb.org/3/tv/{game_of_thrones_id}/season/2\"\nseason_response = requests.get(season_details_url, headers=headers)\nseason_results = season_response.json()\n\n# Extract and print the air date of the second season of 'Game of Thrones'\nair_date = season_results['air_date']\nprint(f\"The air date of the second season of Game of Thrones is: {air_date}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ]
+    },
+    {
+        "query": " give me a poster of the third episode of Band of Brothers",
+        "results": "```python\nimport requests\n\n# Define the API endpoint\nurl = \"https://api.themoviedb.org/3/search/tv\"\n# Specify the query parameters\nparams = {\n    \"query\": \"Band of Brothers\",\n    \"include_adult\": False\n}\n# Make the GET request to search for the TV show \"Band of Brothers\"\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\n\n# Get the TV show id of \"Band of Brothers\"\ntv_id = data['results'][0]['id']\n\n# Define the API endpoint to get the third episode of Band of Brothers\nurl = f\"https://api.themoviedb.org/3/tv/{tv_id}/season/1/episode/3/images\"\n# Make the GET request to get the images of the third episode of Band of Brothers\nresponse = requests.get(url, headers=headers)\ndata = response.json()\n\n# Extract the poster path of the third episode\nposter_path = data['stills'][0]['file_path']\n\n# Print the poster path of the third episode of Band of Brothers\nprint(f\"The poster path of the third episode of Band of Brothers is: {poster_path}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+        ]
+    },
+    {
+        "query": "What is the logo of the network that produced Game of Thrones?",
+        "results": "```python\nimport requests\n\n# Provided headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for the TV show \"Game of Thrones\" to get its id\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\nsearch_params = {\n    \"query\": \"Game of Thrones\"\n}\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Get the TV show id for \"Game of Thrones\"\ngame_of_thrones_id = search_results[\"results\"][0][\"id\"]\n\n# Step 2: Get the primary details of the TV show \"Game of Thrones\" by id\ntv_details_url = f\"https://api.themoviedb.org/3/tv/{game_of_thrones_id}\"\ntv_details_response = requests.get(tv_details_url, headers=headers)\ntv_details = tv_details_response.json()\n\n# Get the network id that produced \"Game of Thrones\"\nnetwork_id = tv_details[\"networks\"][0][\"id\"]\n\n# Step 3: Get the logo of the network by id\nnetwork_logo_url = f\"https://api.themoviedb.org/3/network/{network_id}/images\"\nnetwork_logo_response = requests.get(network_logo_url, headers=headers)\nnetwork_logo = network_logo_response.json()\n\n# Print the logo path of the network that produced \"Game of Thrones\"\nprint(network_logo[\"logos\"][0][\"file_path\"])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}/images"
+        ]
+    },
+    {
+        "query": "give me the homepage of the network that produced Game of Thrones",
+        "results": "```python\nimport requests\n\n# Define the API url to search for tv show Game of Thrones\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the parameters for searching Game of Thrones\nparams = {\n    \"query\": \"Game of Thrones\",\n    \"include_adult\": False\n}\n\n# Make a GET request to search for Game of Thrones\nsearch_response = requests.get(search_url, headers=headers, params=params)\n\n# Get the TV id of Game of Thrones\nresults = search_response.json()[\"results\"]\ngame_of_thrones_id = results[0][\"id\"]\n\n# Define the API url to get the primary TV show details by id (Game of Thrones)\ntv_details_url = f\"https://api.themoviedb.org/3/tv/{game_of_thrones_id}\"\n\n# Make a GET request to get the details of Game of Thrones\ndetails_response = requests.get(tv_details_url, headers=headers)\n\n# Get the network id of the network that produced Game of Thrones\nnetwork_id = details_response.json()[\"networks\"][0][\"id\"]\n\n# Define the API url to get the details of the network\nnetwork_details_url = f\"https://api.themoviedb.org/3/network/{network_id}\"\n\n# Make a GET request to get the details of the network\nnetwork_response = requests.get(network_details_url, headers=headers)\n\n# Get the homepage of the network that produced Game of Thrones\nhomepage = network_response.json()[\"homepage\"]\n\nprint(homepage)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ]
+    },
+    {
+        "query": "give me a keyword of the most popular TV show currently",
+        "results": "```python\nimport requests\n\n# Define the API endpoint\nurl = \"https://api.themoviedb.org/3/tv/popular\"\n\n# Set the headers with the provided authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the GET request to retrieve the popular TV shows\nresponse = requests.get(url, headers=headers)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Extract the first TV show from the response\n    tv_show = response.json()[\"results\"][0]\n    tv_show_id = tv_show[\"id\"]\n    \n    # Get the keywords for the most popular TV show\n    keyword_url = f\"https://api.themoviedb.org/3/tv/{tv_show_id}/keywords\"\n    keyword_response = requests.get(keyword_url, headers=headers)\n    \n    # Check if the request for keywords was successful\n    if keyword_response.status_code == 200:\n        # Extract and print the keyword of the most popular TV show\n        keyword = keyword_response.json()[\"results\"][0][\"name\"]\n        print(f\"The keyword for the most popular TV show currently is: {keyword}\")\n    else:\n        print(\"Failed to retrieve keywords for the TV show\")\nelse:\n    print(\"Failed to retrieve popular TV shows\")\n\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords",
+            "GET https://api.themoviedb.org/3/movie/popular"
+        ]
+    },
+    {
+        "query": "Where is the headquarter of the company that produced currently the most popular TV show?",
+        "results": "```python\nimport requests\n\n# Define the headers with authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Call the API to get the list of current popular TV shows\npopular_tv_url = \"https://api.themoviedb.org/3/tv/popular\"\nresponse_popular_tv = requests.get(popular_tv_url, headers=headers)\npopular_tv_data = response_popular_tv.json()\n\n# Get the id of the company that produced the most popular TV show\nmost_popular_tv_id = popular_tv_data['results'][0]['production_companies'][0]['id']\n\n# Call the API to get the details of the company by id\ncompany_url = f\"https://api.themoviedb.org/3/company/{most_popular_tv_id}\"\nresponse_company = requests.get(company_url, headers=headers)\ncompany_data = response_company.json()\n\n# Extract the headquarters location\nheadquarters = company_data['headquarters']\n\nprint(f\"The headquarter of the company that produced the most popular TV show is: {headquarters}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "What is the genre of The Mandalorian?",
+        "results": "```python\nimport requests\n\n# Define the API url for searching a TV show\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the parameters for the search\nparams_search_tv = {\n    \"query\": \"The Mandalorian\",\n}\n\n# Make the GET request to search for The Mandalorian TV show\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\nsearch_results = response_search_tv.json()\n\n# Get the TV show id for The Mandalorian\ntv_id = search_results['results'][0]['id']\n\n# Define the API url for getting primary TV show details by id\nurl_get_tv_details = f\"https://api.themoviedb.org/3/tv/{tv_id}\"\n\n# Make the GET request to get the TV show details\nresponse_get_tv_details = requests.get(url_get_tv_details, headers=headers)\ntv_details = response_get_tv_details.json()\n\n# Retrieve the genre of The Mandalorian\ngenres = tv_details['genres']\ngenre_names = [genre['name'] for genre in genres]\n\n# Output the genre of The Mandalorian\nprint(genre_names)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/movie/top_rated"
+        ]
+    },
+    {
+        "query": "When is the birthday of the lead actor of today's most trending TV show?",
+        "results": "```python\nimport requests\n\n# Headers for API authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the trending TV shows for today\nurl_trending_tv = \"https://api.themoviedb.org/3/trending/tv/day\"\nresponse_trending_tv = requests.get(url_trending_tv, headers=headers)\ntrending_tv_data = response_trending_tv.json()\n\n# Extract the tv_id of the most trending TV show\nmost_trending_tv_id = trending_tv_data[\"results\"][0][\"id\"]\n\n# Get the cast and crew credits for the most trending TV show\nurl_cast_crew = f\"https://api.themoviedb.org/3/tv/{most_trending_tv_id}/credits\"\nresponse_cast_crew = requests.get(url_cast_crew, headers=headers)\ncast_crew_data = response_cast_crew.json()\n\n# Get the lead actor's details\nlead_actor_id = cast_crew_data[\"cast\"][0][\"id\"]\nurl_lead_actor = f\"https://api.themoviedb.org/3/person/{lead_actor_id}\"\nresponse_lead_actor = requests.get(url_lead_actor, headers=headers)\nlead_actor_data = response_lead_actor.json()\n\n# Extract the birthday of the lead actor\nlead_actor_birthday = lead_actor_data[\"birthday\"]\n\nprint(\"The birthday of the lead actor of today's most trending TV show is:\", lead_actor_birthday)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "What is the homepage of the network that produced today's most trending TV show?",
+        "results": "```python\nimport requests\n\n# HTTP headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Call the trending endpoint to get the most trending TV show\ntrending_url = \"https://api.themoviedb.org/3/trending/tv/day\"\ntrending_response = requests.get(trending_url, headers=headers)\ntrending_data = trending_response.json()\n\n# Get the TV ID of the most trending TV show\nmost_trending_tv_id = trending_data[\"results\"][0][\"id\"]\n\n# Call the TV show details endpoint to get the network that produced the most trending TV show\ntv_details_url = f\"https://api.themoviedb.org/3/tv/{most_trending_tv_id}\"\ntv_details_response = requests.get(tv_details_url, headers=headers)\ntv_details_data = tv_details_response.json()\n\n# Get the network ID that produced the most trending TV show\nnetwork_id = tv_details_data[\"networks\"][0][\"id\"]\n\n# Call the network details endpoint to get the homepage of the network\nnetwork_details_url = f\"https://api.themoviedb.org/3/network/{network_id}\"\nnetwork_details_response = requests.get(network_details_url, headers=headers)\nnetwork_details_data = network_details_response.json()\n\n# Extract the homepage of the network\nnetwork_homepage = network_details_data[\"homepage\"]\n\nprint(f\"The homepage of the network that produced today's most trending TV show is: {network_homepage}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}"
+        ]
+    },
+    {
+        "query": "give me a review of today's most trending TV show",
+        "results": "```python\nimport requests\n\n# Define the API url for getting daily trending TV shows\nurl_trending_tv = \"https://api.themoviedb.org/3/trending/tv/day\"\n\n# Define the headers required for the API call\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the API call to get the daily trending TV shows\nresponse = requests.get(url_trending_tv, headers=headers)\n\n# Check if the API call was successful and get the TV show id of the most trending TV show\nif response.status_code == 200:\n    tv_show_id = response.json()['results'][0]['id']\n\n    # Define the API url for getting reviews of the most trending TV show\n    url_reviews = f\"https://api.themoviedb.org/3/tv/{tv_show_id}/reviews\"\n\n    # Make the API call to get the reviews of the most trending TV show\n    response_reviews = requests.get(url_reviews, headers=headers)\n\n    # Check if the API call for reviews was successful and print the reviews\n    if response_reviews.status_code == 200:\n        reviews = response_reviews.json()['results']\n        for review in reviews:\n            print(\"Author:\", review['author'])\n            print(\"Content:\", review['content'])\n            print(\"-\" * 30)\n    else:\n        print(\"Failed to get reviews for the trending TV show.\")\nelse:\n    print(\"Failed to get trending TV shows.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "I prefer a TV show that similar to today's most trending TV show",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Calling the API to get the daily trending TV shows\ntrending_response = requests.get(\"https://api.themoviedb.org/3/trending/tv/day\", headers=headers)\ntrending_tv_shows = trending_response.json()['results']\n\n# Extracting the TV show id of the most popular TV show\nmost_popular_tv_id = trending_tv_shows[0]['id']\n\n# Calling the API to get similar TV shows to the most popular TV show\nsimilar_response = requests.get(f\"https://api.themoviedb.org/3/tv/{most_popular_tv_id}/similar\", headers=headers)\nsimilar_tv_shows = similar_response.json()['results']\n\n# Displaying the similar TV shows\nfor show in similar_tv_shows:\n    print(show['name'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ]
+    },
+    {
+        "query": "I need a poster of today's most trending TV show",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the trending TV shows for today\nurl = \"https://api.themoviedb.org/3/trending/tv/day\"\nresponse = requests.get(url, headers=headers)\ndata = response.json()\n\nif \"results\" in data and len(data[\"results\"]) > 0:\n    # Get the poster of the most trending TV show\n    tv_id = data[\"results\"][0][\"id\"]\n    image_url = f\"https://api.themoviedb.org/3/tv/{tv_id}/images\"\n    \n    image_response = requests.get(image_url, headers=headers)\n    image_data = image_response.json()\n    \n    if \"posters\" in image_data and len(image_data[\"posters\"]) > 0:\n        poster_path = image_data[\"posters\"][0][\"file_path\"]\n        print(f\"Poster URL of today's most trending TV show: https://image.tmdb.org/t/p/original/{poster_path}\")\n    else:\n        print(\"No posters available for the most trending TV show.\")\nelse:\n    print(\"No trending TV shows available for today.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/images",
+            "GET https://api.themoviedb.org/3/review/{review_id}"
+        ]
+    },
+    {
+        "query": "Who has worked with Jeremy Clarkson in his most popular TV show?",
+        "results": "```python\nimport requests\n\n# Define the API URLs\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\nperson_tv_credits_url = \"https://api.themoviedb.org/3/person/{person_id}/tv_credits\"\ntv_credits_url = \"https://api.themoviedb.org/3/tv/{tv_id}/credits\"\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for Jeremy Clarkson\nparams = {\n    \"query\": \"Jeremy Clarkson\"\n}\nresponse = requests.get(search_person_url, headers=headers, params=params)\nresults = response.json()\n\nif results['total_results'] > 0:\n    jeremy_clarkson_id = results['results'][0]['id']\n    \n    # Get Jeremy Clarkson's TV show credits\n    tv_credits_params = {}\n    response = requests.get(person_tv_credits_url.format(person_id=jeremy_clarkson_id), headers=headers, params=tv_credits_params)\n    tv_credits_results = response.json()\n    \n    # Get the most popular TV show of Jeremy Clarkson\n    if len(tv_credits_results['cast']) > 0:\n        most_popular_show_id = tv_credits_results['cast'][0]['id']\n        \n        # Get the credits for the most popular TV show\n        response = requests.get(tv_credits_url.format(tv_id=most_popular_show_id), headers=headers)\n        credits_results = response.json()\n        \n        print(\"People who have worked with Jeremy Clarkson in his most popular TV show:\")\n        for cast_member in credits_results['cast']:\n            if cast_member['name'] != \"Jeremy Clarkson\":\n                print(cast_member['name'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ]
+    },
+    {
+        "query": "What does the lead actor of the first episode of second season of Black Mirror look like?",
+        "results": "```python\nimport requests\n\n# Define the API urls\nsearch_tv_url = \"https://api.themoviedb.org/3/search/tv\"\ntv_credits_url = \"https://api.themoviedb.org/3/tv/{tv_id}/credits\"\nperson_images_url = \"https://api.themoviedb.org/3/person/{person_id}/images\"\n\n# Set the API key in headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show \"Black Mirror\" to get the TV ID\nparams = {\n    \"query\": \"Black Mirror\",\n    \"include_adult\": False\n}\nresponse = requests.get(search_tv_url, headers=headers, params=params)\ntv_id = response.json()['results'][0]['id']\n\n# Get the credits for the TV show using the TV ID to get the cast\ncredits_url = tv_credits_url.format(tv_id=tv_id)\nresponse = requests.get(credits_url, headers=headers)\ncast = response.json()['cast']\n\n# Get the lead actor from the cast\nlead_actor = cast[0]\n\n# Get the images for the lead actor\nperson_id = lead_actor['id']\nimages_url = person_images_url.format(person_id=person_id)\nresponse = requests.get(images_url, headers=headers)\nactor_images = response.json()['profiles']\n\n# Output the details of the lead actor\nprint(\"Lead Actor of the first episode of second season of Black Mirror:\")\nprint(\"Name:\", lead_actor['name'])\nprint(\"Character in Black Mirror:\", lead_actor['character'])\nprint(\"Image URL:\", \"https://image.tmdb.org/t/p/original\" + actor_images[0]['file_path'])\n```\nIn the code above, we first search for the TV show \"Black Mirror\" and obtain its TV ID. Then, we get the credits for this TV show to find the lead actor. After that, we retrieve the images for the lead actor and output their details, including their name, character in \"Black Mirror\", and an image URL.",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ]
+    },
+    {
+        "query": "When is the lead actor of The Mandalorian born?",
+        "results": "```python\nimport requests\n\n# Define the necessary information to call the APIs\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n# Define the query to search for The Mandalorian TV show\ntv_search_params = {\n    \"query\": \"The Mandalorian\",\n    \"include_adult\": False\n}\n\n# Call the API to search for TV shows\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\nresponse = requests.get(search_url, headers=headers, params=tv_search_params)\ntv_results = response.json()\n\n# Get the TV show ID for The Mandalorian\ntv_id = tv_results[\"results\"][0][\"id\"]\n\n# Call the API to get the credits of the TV show\ncredits_url = f\"https://api.themoviedb.org/3/tv/{tv_id}/credits\"\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_data = credits_response.json()\n\n# Get the lead actor's ID\nlead_actor_id = credits_data[\"cast\"][0][\"id\"]\n\n# Call the API to get the details of the lead actor\nperson_url = f\"https://api.themoviedb.org/3/person/{lead_actor_id}\"\nperson_response = requests.get(person_url, headers=headers)\nperson_data = person_response.json()\n\n# Get the birth date of the lead actor\nlead_actor_birthday = person_data[\"birthday\"]\n\nprint(\"The lead actor of The Mandalorian is born on:\", lead_actor_birthday)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "Who is the lead actor of today's most popular TV show?",
+        "results": "```python\nimport requests\n\n# API url to get the list of current popular TV shows\npopular_tv_url = \"https://api.themoviedb.org/3/tv/popular\"\n# Parameter to specify the first page\nparams = {\n    'page': 1\n}\n\n# Send GET request to get the list of popular TV shows\nresponse = requests.get(popular_tv_url, headers=headers, params=params)\npopular_tv_data = response.json()\n\n# Get the TV show ID of the most popular show\nmost_popular_tv_id = popular_tv_data['results'][0]['id']\n\n# API url to get the credits of the most popular TV show\ncredits_url = f\"https://api.themoviedb.org/3/tv/{most_popular_tv_id}/credits\"\n\n# Send GET request to get the credits for the most popular TV show\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_data = credits_response.json()\n\n# Get the lead actor name of the most popular TV show\nlead_actor = credits_data['cast'][0]['name']\n\nprint(f\"The lead actor of today's most popular TV show is: {lead_actor}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/genre/tv/list"
+        ]
+    },
+    {
+        "query": "give me a photo of the lead actor of the most popular TV show of this week",
+        "results": "```python\nimport requests\n\n# HTTP header with authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Get the list of popular TV shows\ntv_popular_url = \"https://api.themoviedb.org/3/tv/popular\"\nparams = {\"page\": 1}\nresponse = requests.get(tv_popular_url, headers=headers, params=params)\npopular_tv_shows = response.json()\n\n# Get the TV ID of the most popular TV show\nmost_popular_tv_id = popular_tv_shows[\"results\"][0][\"id\"]\n\n# Get the credits of the most popular TV show\ntv_credits_url = f\"https://api.themoviedb.org/3/tv/{most_popular_tv_id}/credits\"\nresponse = requests.get(tv_credits_url, headers=headers)\ntv_credits = response.json()\n\n# Get the lead actor's profile picture\nlead_actor_id = tv_credits[\"cast\"][0][\"id\"]\nperson_images_url = f\"https://api.themoviedb.org/3/person/{lead_actor_id}/images\"\nresponse = requests.get(person_images_url, headers=headers)\nlead_actor_images = response.json()\n\n# Output the lead actor's profile picture file path\nlead_actor_profile_path = lead_actor_images[\"profiles\"][0][\"file_path\"]\nprint(lead_actor_profile_path)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/tv/popular",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ]
+    },
+    {
+        "query": "give me some reviews of Cate Blanchett's latest TV show",
+        "results": "```python\nimport requests\n\n# Define the API urls\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\nget_tv_credits_url = \"https://api.themoviedb.org/3/person/{}/tv_credits\"\nget_tv_reviews_url = \"https://api.themoviedb.org/3/tv/{}/reviews\"\n\n# Set the API key in the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for Cate Blanchett\nparams = {\n    \"query\": \"Cate Blanchett\",\n    \"page\": 1,\n    \"include_adult\": False,\n    \"region\": \"US\"\n}\nresponse = requests.get(search_person_url, headers=headers, params=params)\n\nif response.status_code == 200:\n    person_id = response.json()[\"results\"][0][\"id\"]\n    \n    # Get the TV credits for Cate Blanchett\n    tv_credits_response = requests.get(get_tv_credits_url.format(person_id), headers=headers)\n    \n    if tv_credits_response.status_code == 200:\n        # Get the latest TV show of Cate Blanchett\n        latest_tv_show = tv_credits_response.json()[\"cast\"][0]\n        \n        # Get the reviews for the latest TV show\n        tv_id = latest_tv_show[\"id\"]\n        tv_reviews_response = requests.get(get_tv_reviews_url.format(tv_id), headers=headers)\n        \n        if tv_reviews_response.status_code == 200:\n            reviews = tv_reviews_response.json()[\"results\"]\n            print(reviews)\n        else:\n            print(\"Failed to get TV reviews\")\n    else:\n        print(\"Failed to get TV credits\")\nelse:\n    print(\"Failed to search for person\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ]
+    },
+    {
+        "query": "What is David Schwimmer's most popular TV show?",
+        "results": "```python\nimport requests\n\n# API url to search for the person\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\nperson_params = {\n    \"query\": \"David Schwimmer\",\n}\nresponse_person = requests.get(search_person_url, headers=headers, params=person_params)\ndata_person = response_person.json()\n\n# Get the person ID for David Schwimmer\nperson_id = data_person[\"results\"][0][\"id\"]\n\n# API url to get the TV show credit for the person\ntv_credits_url = f\"https://api.themoviedb.org/3/person/{person_id}/tv_credits\"\nresponse_tv_credits = requests.get(tv_credits_url, headers=headers)\ndata_tv_credits = response_tv_credits.json()\n\n# Find the most popular TV show\ntv_credits = data_tv_credits[\"cast\"]\nmost_popular_tv_show = max(tv_credits, key=lambda x: x[\"popularity\"])\ntv_show_name = most_popular_tv_show[\"original_name\"]\n\nprint(f\"David Schwimmer's most popular TV show is: {tv_show_name}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ]
+    },
+    {
+        "query": "Who directed the third episode of the second season of Black Mirror?",
+        "results": "```python\nimport requests\n\n# Define the headers with the provided Authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the TV show 'Black Mirror'\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\nparams_search_tv = {\n    \"query\": \"Black Mirror\",\n    \"page\": 1,\n    \"include_adult\": False\n}\n\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ndata_search_tv = response_search_tv.json()\n\n# Get the ID of 'Black Mirror' TV show\ntv_id = data_search_tv['results'][0]['id']\n\n# Get the credits for the third episode of the second season of Black Mirror\nurl_credits = f\"https://api.themoviedb.org/3/tv/{tv_id}/season/2/episode/3/credits\"\n\nresponse_credits = requests.get(url_credits, headers=headers)\ndata_credits = response_credits.json()\n\n# Extract the director of the episode\nfor crew_member in data_credits['crew']:\n    if crew_member['job'] == 'Director':\n        director = crew_member['name']\n        break\n\nprint(f\"The director of the third episode of the second season of Black Mirror was: {director}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images"
+        ]
+    },
+    {
+        "query": "give me some movies that Christopher Nolan known for",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/search/person\"\n\n# Set the parameters for the query\nparams = {\n    \"query\": \"Christopher Nolan\",\n    \"include_adult\": False,\n    \"page\": 1\n}\n\n# Set the headers for API authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the API request\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    results = response.json()\n    \n    # Extract known for movies of Christopher Nolan\n    known_for_movies = []\n    for person in results[\"results\"]:\n        if person[\"name\"] == \"Christopher Nolan\":\n            known_for_movies = person[\"known_for\"]\n            break\n    \n    # Print known for movies\n    for movie in known_for_movies:\n        print(movie[\"title\"])\n\nelse:\n    print(\"Error: Unable to fetch data from the API\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/movie/upcoming",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews"
+        ]
+    },
+    {
+        "query": "Avatar versus Avatar: The Way of Water, which has a higher rating",
+        "results": "```python\nimport requests\n\n# Set the headers with the provided Authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Query the movies \"Avatar\" and \"Avatar: The Way of Water\" to compare their ratings\n# Using the search/movie API with the query parameter to search for the movies\n# Replace the query with the movie titles and get the first page of results\nparams_avatar = {\n    \"query\": \"Avatar\",\n    \"page\": 1\n}\nparams_avatar_way_of_water = {\n    \"query\": \"Avatar: The Way of Water\",\n    \"page\": 1\n}\n\n# Make the API requests to search for the movies\nresponse_avatar = requests.get(\"https://api.themoviedb.org/3/search/movie\", headers=headers, params=params_avatar)\nresponse_avatar_way_of_water = requests.get(\"https://api.themoviedb.org/3/search/movie\", headers=headers, params=params_avatar_way_of_water)\n\n# Get the average ratings for each movie\navatar_results = response_avatar.json()[\"results\"]\ntotal_rating_avatar = sum(movie[\"vote_average\"] for movie in avatar_results) / len(avatar_results)\n\navatar_way_of_water_results = response_avatar_way_of_water.json()[\"results\"]\ntotal_rating_avatar_way_of_water = sum(movie[\"vote_average\"] for movie in avatar_way_of_water_results) / len(avatar_way_of_water_results)\n\n# Compare the ratings and print the result\nif total_rating_avatar > total_rating_avatar_way_of_water:\n    print(\"Avatar has a higher rating than Avatar: The Way of Water\")\nelif total_rating_avatar < total_rating_avatar_way_of_water:\n    print(\"Avatar: The Way of Water has a higher rating than Avatar\")\nelse:\n    print(\"Avatar and Avatar: The Way of Water have the same rating\")\n\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/search/movie"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images"
+        ]
+    },
+    {
+        "query": "Show me some English movies rating no less than 7.0 and no earlier than 2021",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/discover/movie\"\n\n# Define the parameters according to the query\nparams = {\n    \"sort_by\": \"vote_average.desc\",\n    \"vote_average.gte\": 7.0,\n    \"primary_release_date.gte\": \"2021-01-01\",\n    \"with_original_language\": \"en\",\n    \"page\": 1\n}\n\n# Define the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the API call\nresponse = requests.get(url, params=params, headers=headers)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Extract the JSON data\n    data = response.json()\n    \n    # Print the movie titles\n    for movie in data['results']:\n        print(movie['title'])\nelse:\n    print(\"Error in API call. Status code:\", response.status_code)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/discover/movie"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/discover/movie",
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar"
+        ]
+    },
+    {
+        "query": "What is the genre of the movie Lord of the Ring?",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/search/movie\"\n\n# Define the query parameters\nparams = {\n    \"query\": \"Lord of the Rings\",\n    \"page\": 1,\n    \"include_adult\": False,\n}\n\n# Define the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make a GET request to the API\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    data = response.json()\n    # Extract the genre ids of the movie\n    if data[\"total_results\"] > 0:\n        genre_ids = data[\"results\"][0][\"genre_ids\"]\n        print(\"Genre IDs of the movie Lord of the Rings:\", genre_ids)\n    else:\n        print(\"No movie found with the query 'Lord of the Rings'\")\nelse:\n    print(\"Failed to retrieve data from API\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}",
+            "GET https://api.themoviedb.org/3/credit/{credit_id}"
+        ]
+    },
+    {
+        "query": "What is the birthday of the most popular person right now?",
+        "results": "```python\nimport requests\n\n# Define the API url\nurl = \"https://api.themoviedb.org/3/person/popular\"\n\n# Set the page parameter to 1 to get the first page of results\nparams = {\"page\": 1}\n\n# Set the HTTP headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make the API call\nresponse = requests.get(url, headers=headers, params=params)\n\n# Extract the birthday of the most popular person from the response\nif response.status_code == 200:\n    data = response.json()\n    if data[\"results\"]:\n        most_popular_person = data[\"results\"][0]  # Assuming the first person is the most popular\n        birthday = most_popular_person.get(\"birthday\", \"Birthday information not available\")\n        print(\"The birthday of the most popular person right now is:\", birthday)\n    else:\n        print(\"No results found\")\nelse:\n    print(\"Error:\", response.status_code)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/person/popular",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/person/popular",
+            "GET https://api.themoviedb.org/3/person/{person_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+        ]
+    },
+    {
+        "query": "give me a poster of the second season of Big Bang Theory",
+        "results": "```python\nimport requests\n\n# Define the API endpoint to search for the TV show \"Big Bang Theory\"\nurl_search_tv = \"https://api.themoviedb.org/3/search/tv\"\n\n# Set the query parameters\nparams_search_tv = {\n    \"query\": \"Big Bang Theory\",\n    \"include_adult\": False\n}\n\n# Make the API request to search for the TV show\nresponse_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)\ndata_search_tv = response_search_tv.json()\n\n# Get the TV show ID for \"Big Bang Theory\"\ntv_id = data_search_tv['results'][0]['id']\n\n# Define the API endpoint to get images for the second season of \"Big Bang Theory\"\nurl_season_images = f\"https://api.themoviedb.org/3/tv/{tv_id}/season/2/images\"\n\n# Make the API request to get images for the second season\nresponse_season_images = requests.get(url_season_images, headers=headers)\ndata_season_images = response_season_images.json()\n\n# Get the poster image for the second season of \"Big Bang Theory\"\nposter_path = data_season_images['posters'][0]['file_path']\nprint(\"Poster URL for the second season of Big Bang Theory:\")\nprint(f\"https://image.tmdb.org/t/p/original{poster_path}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/images",
+            "GET https://api.themoviedb.org/3/genre/movie/list"
+        ]
+    },
+    {
+        "query": "What is the name of the third episod of the second season of Mandalorian?",
+        "results": "```python\nimport requests\n\n# Define the API url to get the TV show details by id\nurl = \"https://api.themoviedb.org/3/tv/82856/season/2/episode/3\"\n\n# Define the Http headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Send a GET request to the API\nresponse = requests.get(url, headers=headers)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Parse the JSON response\n    data = response.json()\n    \n    # Extract the name of the third episode of the second season of Mandalorian\n    episode_name = data[\"name\"]\n    \n    print(\"The name of the third episode of the second season of Mandalorian is:\", episode_name)\nelse:\n    print(\"Failed to retrieve data. Error:\", response.status_code)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}",
+            "GET https://api.themoviedb.org/3/search/company"
+        ]
+    },
+    {
+        "query": "When is the bitrhday of the lead actor of the movie The Shawshank Redemptionn?",
+        "results": "```python\nimport requests\n\n# Define the headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"The Shawshank Redemption\"\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"The Shawshank Redemption\",\n}\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Get the movie ID for \"The Shawshank Redemption\"\nmovie_id = search_results['results'][0]['id']\n\n# Get the credits for the movie\ncredits_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_results = credits_response.json()\n\n# Get the lead actor's ID\nlead_actor_id = credits_results['cast'][0]['id']\n\n# Get the lead actor's details\nactor_url = f\"https://api.themoviedb.org/3/person/{lead_actor_id}\"\nactor_response = requests.get(actor_url, headers=headers)\nactor_details = actor_response.json()\n\n# Print the lead actor's birthday\nprint(actor_details['birthday'])\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "When is the birthday of the director of the movie The Shawshank Redemption?",
+        "results": "```python\nimport requests\n\n# Define the API endpoint to search for the movie The Shawshank Redemption\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"The Shawshank Redemption\",\n    \"include_adult\": False\n}\n\n# Make the API call to search for the movie\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_movie_id = search_response.json()[\"results\"][0][\"id\"]  # Get the movie id\n\n# Define the API endpoint to get the credits of the movie using the movie id\ncredits_url = f\"https://api.themoviedb.org/3/movie/{search_movie_id}/credits\"\n\n# Make the API call to get the credits of the movie\ncredits_response = requests.get(credits_url, headers=headers)\ndirector_id = credits_response.json()[\"crew\"][0][\"id\"]  # Get the director's id\n\n# Define the API endpoint to get the details of the director using the director's id\ndirector_url = f\"https://api.themoviedb.org/3/person/{director_id}\"\n\n# Make the API call to get the details of the director\ndirector_response = requests.get(director_url, headers=headers)\ndirector_birthday = director_response.json()[\"birthday\"]  # Get the director's birthday\n\nprint(\"The birthday of the director of The Shawshank Redemption is:\", director_birthday)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "Where is the headquarter of the company that created the movie The Shawshank Redemption?",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for the movie \"The Shawshank Redemption\" to get the production company id\nsearch_movie_url = \"https://api.themoviedb.org/3/search/movie\"\nparams = {\n    \"query\": \"The Shawshank Redemption\"\n}\nresponse = requests.get(search_movie_url, headers=headers, params=params)\ndata = response.json()\nproduction_company_id = data[\"results\"][0][\"production_company_id\"]\n\n# Step 2: Get the details of the company using the production company id\ncompany_details_url = f\"https://api.themoviedb.org/3/company/{production_company_id}\"\nresponse = requests.get(company_details_url, headers=headers)\ncompany_data = response.json()\n\n# Print the headquarters of the company\nheadquarters = company_data[\"headquarters\"]\nprint(f\"The headquarters of the company that created the movie 'The Shawshank Redemption' is: {headquarters}\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "Where is the headquarter of the company that created the collection Star Wars?",
+        "results": "```python\nimport requests\n\n# Set the API url to get the collection ID for Star Wars\nsearch_collection_url = \"https://api.themoviedb.org/3/search/collection\"\n\n# Parameters for searching for the collection\nparams = {\n    \"query\": \"Star Wars\"\n}\n\n# Make a GET request to search for the collection\nsearch_collection_response = requests.get(search_collection_url, headers=headers, params=params)\nsearch_collection_data = search_collection_response.json()\n\n# Extract the collection ID for Star Wars\nstar_wars_collection_id = search_collection_data['results'][0]['id']\n\n# Set the API url to get details of the collection based on its ID\ncollection_details_url = f\"https://api.themoviedb.org/3/collection/{star_wars_collection_id}\"\n\n# Make a GET request to get the details of the Star Wars collection\ncollection_details_response = requests.get(collection_details_url, headers=headers)\ncollection_details_data = collection_details_response.json()\n\n# Get the company ID that is associated with the Star Wars collection\ncompany_id = collection_details_data['parts'][0]['production_company'][0]['id']\n\n# Set the API url to get details of the company based on its ID\ncompany_details_url = f\"https://api.themoviedb.org/3/company/{company_id}\"\n\n# Make a GET request to get the details of the company that created Star Wars\ncompany_details_response = requests.get(company_details_url, headers=headers)\ncompany_details_data = company_details_response.json()\n\n# Get the headquarters of the company that created the Star Wars collection\nstar_wars_company_headquarters = company_details_data['headquarters']\n\nprint(\"The headquarters of the company that created the Star Wars collection is:\", star_wars_company_headquarters)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/collection",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}"
+        ]
+    },
+    {
+        "query": "Who has an earlier release date, The Double Life of Veronique or Mulholland Drive?",
+        "results": "```python\nimport requests\n\n# HTTP header\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"The Double Life of Veronique\"\nsearch_params_veronique = {\n    \"query\": \"The Double Life of Veronique\",\n    \"include_adult\": False\n}\nsearch_veronique_response = requests.get(\"https://api.themoviedb.org/3/search/movie\", headers=headers, params=search_params_veronique)\nveronique_results = search_veronique_response.json()[\"results\"]\n\n# Search for the movie \"Mulholland Drive\"\nsearch_params_mulholland = {\n    \"query\": \"Mulholland Drive\",\n    \"include_adult\": False\n}\nsearch_mulholland_response = requests.get(\"https://api.themoviedb.org/3/search/movie\", headers=headers, params=search_params_mulholland)\nmulholland_results = search_mulholland_response.json()[\"results\"]\n\n# Get release dates of the movies\nveronique_release_date = veronique_results[0][\"release_date\"]\nmulholland_release_date = mulholland_results[0][\"release_date\"]\n\n# Compare release dates\nif veronique_release_date < mulholland_release_date:\n    print(\"The Double Life of Veronique was released earlier.\")\nelse:\n    print(\"Mulholland Drive was released earlier.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}",
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}"
+        ]
+    },
+    {
+        "query": "Is the director of Twin Peaks Season 1 and Mulholland Drive the same person?",
+        "results": "```python\nimport requests\n\n# Headers for API authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Function to get the director of a movie or TV show by id\ndef get_credits(api_url):\n    response = requests.get(api_url, headers=headers)\n    if response.status_code == 200:\n        return response.json()\n    else:\n        return None\n\n# Get credits for Twin Peaks Season 1\ntwin_peaks_season_1_credits = get_credits(\"https://api.themoviedb.org/3/tv/1920/season/1/credits\")\n\n# Get credits for Mulholland Drive\nmulholland_drive_credits = get_credits(\"https://api.themoviedb.org/3/movie/101/mulholland-drive/credits\")\n\n# Extract director names from the credits\ntwin_peaks_director = \"\"\nmulholland_drive_director = \"\"\n\nif twin_peaks_season_1_credits:\n    for crew_member in twin_peaks_season_1_credits['crew']:\n        if crew_member['job'] == 'Director':\n            twin_peaks_director = crew_member['name']\n\nif mulholland_drive_credits:\n    for crew_member in mulholland_drive_credits['crew']:\n        if crew_member['job'] == 'Director':\n            mulholland_drive_director = crew_member['name']\n\n# Check if the directors are the same\nif twin_peaks_director == mulholland_drive_director:\n    print(\"Yes, the director of Twin Peaks Season 1 and Mulholland Drive is the same person:\", twin_peaks_director)\nelse:\n    print(\"No, the directors are different.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits"
+        ]
+    },
+    {
+        "query": "Where was the director of Mulholland Drive born?",
+        "results": "```python\nimport requests\n\n# Define the API url to search for the movie \"Mulholland Drive\"\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_params = {\n    \"query\": \"Mulholland Drive\",\n    \"page\": 1,\n    \"include_adult\": False\n}\n\n# Make a GET request to search for the movie\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_data = search_response.json()\n\n# Extract the movie id of \"Mulholland Drive\"\nmovie_id = search_data['results'][0]['id']\n\n# Define the API url to get the credits of the movie by movie_id\ncredits_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\n\n# Make a GET request to get the credits of the movie\ncredits_response = requests.get(credits_url, headers=headers)\ncredits_data = credits_response.json()\n\n# Extract the director's id from the credits data\ndirector_id = None\nfor crew_member in credits_data['crew']:\n    if crew_member['job'] == 'Director':\n        director_id = crew_member['id']\n        break\n\n# Define the API url to get the details of the director by director_id\ndirector_url = f\"https://api.themoviedb.org/3/person/{director_id}\"\n\n# Make a GET request to get the details of the director\ndirector_response = requests.get(director_url, headers=headers)\ndirector_data = director_response.json()\n\n# Extract the birthplace of the director\nbirthplace = director_data['place_of_birth']\n\nprint(\"The director of Mulholland Drive was born in: \", birthplace)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ]
+    },
+    {
+        "query": "Is Mulholland Drive in the Top-10 rated list of the TMDB?",
+        "results": "```python\nimport requests\n\n# API url for searching movie by query\nsearch_url = \"https://api.themoviedb.org/3/search/movie\"\n\n# API url for getting top rated movies\ntop_rated_url = \"https://api.themoviedb.org/3/movie/top_rated\"\n\n# Headers to be included in API request\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Parameters for searching \"Mulholland Drive\"\nsearch_params = {\n    \"query\": \"Mulholland Drive\"\n}\n\n# Parameters for getting top rated movies\ntop_rated_params = {\n    \"page\": 1\n}\n\n# Sending API request to search for \"Mulholland Drive\"\nsearch_response = requests.get(search_url, headers=headers, params=search_params)\nsearch_results = search_response.json()\n\n# Extracting the movie id for \"Mulholland Drive\" from search results\nmovie_id = -1\nif 'results' in search_results and len(search_results['results']) > 0:\n    for result in search_results['results']:\n        if result['title'] == \"Mulholland Drive\":\n            movie_id = result['id']\n            break\n\n# Checking if \"Mulholland Drive\" is in the top rated list\nis_in_top_rated = False\nif movie_id != -1:\n    # Sending API request to get top rated movies\n    top_rated_response = requests.get(top_rated_url, headers=headers, params=top_rated_params)\n    top_rated_results = top_rated_response.json()\n\n    # Checking if the movie id of \"Mulholland Drive\" is in the top rated list\n    if 'results' in top_rated_results and len(top_rated_results['results']) > 0:\n        for result in top_rated_results['results']:\n            if result['id'] == movie_id:\n                is_in_top_rated = True\n                break\n\n# Output the result\nprint(\"Is Mulholland Drive in the Top-10 rated list of the TMDB? \", is_in_top_rated)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/top_rated"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/top_rated",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ]
+    },
+    {
+        "query": "Who directed more movies, Akira Kurosawa or Spielberg?",
+        "results": "```python\nimport requests\n\n# Define the API url and parameters\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\nsearch_params_kurosawa = {\n    \"query\": \"Akira Kurosawa\",\n}\nsearch_params_spielberg = {\n    \"query\": \"Steven Spielberg\",\n}\n\n# Call the API to search for Akira Kurosawa\nresponse_kurosawa = requests.get(search_person_url, headers=headers, params=search_params_kurosawa)\ndata_kurosawa = response_kurosawa.json()\n\n# Call the API to search for Steven Spielberg\nresponse_spielberg = requests.get(search_person_url, headers=headers, params=search_params_spielberg)\ndata_spielberg = response_spielberg.json()\n\n# Get the number of movies directed by each person\nnum_movies_kurosawa = len(data_kurosawa[\"results\"][0][\"known_for\"])\nnum_movies_spielberg = len(data_spielberg[\"results\"][0][\"known_for\"])\n\n# Compare the number of movies directed by Akira Kurosawa and Steven Spielberg\nif num_movies_kurosawa > num_movies_spielberg:\n    print(\"Akira Kurosawa directed more movies.\")\nelif num_movies_kurosawa < num_movies_spielberg:\n    print(\"Steven Spielberg directed more movies.\")\nelse:\n    print(\"Akira Kurosawa and Steven Spielberg directed the same number of movies.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images"
+        ]
+    },
+    {
+        "query": "What TV series has the director of Mulholland Drive directed?",
+        "results": "```python\nimport requests\n\n# API credentials\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for the movie \"Mulholland Drive\"\nsearch_movie_url = \"https://api.themoviedb.org/3/search/movie\"\nsearch_movie_params = {\n    \"query\": \"Mulholland Drive\"\n}\nresponse = requests.get(search_movie_url, headers=headers, params=search_movie_params)\nsearch_results = response.json()\nmovie_id = search_results[\"results\"][0][\"id\"]\n\n# Step 2: Get the director of \"Mulholland Drive\"\nmovie_details_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\nresponse = requests.get(movie_details_url, headers=headers)\nmovie_credits = response.json()\ndirector_name = \"\"\nfor crew_member in movie_credits[\"crew\"]:\n    if crew_member[\"job\"] == \"Director\":\n        director_name = crew_member[\"name\"]\n\n# Step 3: Get the TV series directed by the director\nperson_search_url = \"https://api.themoviedb.org/3/search/person\"\nperson_search_params = {\n    \"query\": director_name\n}\nresponse = requests.get(person_search_url, headers=headers, params=person_search_params)\nperson_results = response.json()\nperson_id = person_results[\"results\"][0][\"id\"]\n\ntv_credits_url = f\"https://api.themoviedb.org/3/person/{person_id}/tv_credits\"\nresponse = requests.get(tv_credits_url, headers=headers)\ntv_credits = response.json()\ntv_series_directed = []\nfor credit in tv_credits[\"crew\"]:\n    if credit[\"job\"] == \"Director\":\n        tv_series_directed.append(credit[\"name\"])\n\n# Output the result\nprint(tv_series_directed)\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ]
+    },
+    {
+        "query": "Tell me about actor Scarlett Johansson's birthday",
+        "results": "```python\nimport requests\n\n# Define the API url for searching a person\nsearch_person_url = \"https://api.themoviedb.org/3/search/person\"\n\n# Define the parameters for the search\nparams = {\n    \"query\": \"Scarlett Johansson\",\n    \"include_adult\": False\n}\n\n# Make a GET request to search for Scarlett Johansson\nresponse = requests.get(search_person_url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Get the results from the response\n    results = response.json()['results']\n    \n    # Check if there are any results\n    if results:\n        # Get the person_id of Scarlett Johansson\n        person_id = results[0]['id']\n        \n        # Define the API url for getting details of a person by id\n        person_details_url = f\"https://api.themoviedb.org/3/person/{person_id}\"\n        \n        # Make a GET request to get details of Scarlett Johansson\n        person_details_response = requests.get(person_details_url, headers=headers)\n        \n        if person_details_response.status_code == 200:\n            # Get the birthday of Scarlett Johansson\n            birthday = person_details_response.json()['birthday']\n            \n            print(\"Scarlett Johansson's birthday is:\", birthday)\n        else:\n            print(\"Error in getting person details:\", person_details_response.json())\n    else:\n        print(\"No results found for Scarlett Johansson\")\nelse:\n    print(\"Error in searching for person:\", response.json())\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates"
+        ]
+    },
+    {
+        "query": "How many seasons of Sword Art Online are there?",
+        "results": "```python\nimport requests\n\n# Headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# API URL to search for TV show\nsearch_url = \"https://api.themoviedb.org/3/search/tv\"\n\n# Parameters for searching 'Sword Art Online'\nparams = {\n    \"query\": \"Sword Art Online\",\n    \"include_adult\": False\n}\n\n# Call the search API\nresponse = requests.get(search_url, headers=headers, params=params)\ndata = response.json()\n\n# Get the TV show id for 'Sword Art Online'\ntv_id = data['results'][0]['id'] if data['results'] else None\n\nif tv_id:\n    # API URL to get details of a TV show\n    details_url = f\"https://api.themoviedb.org/3/tv/{tv_id}\"\n    \n    # Call the details API\n    response = requests.get(details_url, headers=headers)\n    details = response.json()\n    \n    # Get the number of seasons\n    num_seasons = details['number_of_seasons']\n    \n    print(f\"The number of seasons of Sword Art Online are: {num_seasons}\")\nelse:\n    print(\"Sword Art Online not found.\")  # TV show not found by the search API\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords"
+        ]
+    },
+    {
+        "query": "Are Yui Aragaki and Gen Hoshino co-starring in We Married as Job?",
+        "results": "```python\nimport requests\n\n# Define the API url for searching movies\nurl_search_movie = \"https://api.themoviedb.org/3/search/movie\"\n\n# Define the API url for getting movie credits\nurl_movie_credits = \"https://api.themoviedb.org/3/movie/credits\"\n\n# Define the API url for searching companies\nurl_search_company = \"https://api.themoviedb.org/3/search/company\"\n\n# Authorization token in headers\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Search for the movie \"We Married as Job\" to get the movie ID\nparams_search_movie = {\n    \"query\": \"We Married as Job\",\n    \"include_adult\": False\n}\nresponse_search_movie = requests.get(url_search_movie, headers=headers, params=params_search_movie)\ndata_search_movie = response_search_movie.json()\n\n# Get the movie ID for \"We Married as Job\"\nif data_search_movie['results']:\n    movie_id = data_search_movie['results'][0]['id']\n\n    # Get the credits for the movie with the obtained movie_id\n    url_movie_credits = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\n    response_movie_credits = requests.get(url_movie_credits, headers=headers)\n    data_movie_credits = response_movie_credits.json()\n    \n    # Check if Yui Aragaki and Gen Hoshino are co-starring in the movie\n    yui_aragaki = \"Yui Aragaki\"\n    gen_hoshino = \"Gen Hoshino\"\n    cast_list = data_movie_credits['cast']\n    yui_aragaki_present = False\n    gen_hoshino_present = False\n    \n    for cast_member in cast_list:\n        if cast_member['name'] == yui_aragaki:\n            yui_aragaki_present = True\n        if cast_member['name'] == gen_hoshino:\n            gen_hoshino_present = True\n\n    if yui_aragaki_present and gen_hoshino_present:\n        print(\"Yui Aragaki and Gen Hoshino are co-starring in We Married as Job.\")\n    else:\n        print(\"Yui Aragaki and Gen Hoshino are not co-starring in We Married as Job.\")\nelse:\n    print(\"Movie 'We Married as Job' not found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/search/company"
+        ]
+    },
+    {
+        "query": "Who is older, by how many years, the director of film Barbie or the lead actor of television DEATH NOTE?",
+        "results": "```python\nimport requests\n\n# Define the API urls\nmovie_search_url = \"https://api.themoviedb.org/3/search/movie\"\ntv_search_url = \"https://api.themoviedb.org/3/search/tv\"\n\n# Define the headers with the authorization token\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Function to get the director of a movie\ndef get_director(movie_id):\n    credits_url = f\"https://api.themoviedb.org/3/movie/{movie_id}/credits\"\n    response = requests.get(credits_url, headers=headers)\n    data = response.json()\n    crew = data.get('crew', [])\n    for person in crew:\n        if person.get('job') == 'Director':\n            return person.get('name')\n    return None\n\n# Function to get the lead actor of a TV show\ndef get_lead_actor(tv_id):\n    credits_url = f\"https://api.themoviedb.org/3/tv/{tv_id}/credits\"\n    response = requests.get(credits_url, headers=headers)\n    data = response.json()\n    cast = data.get('cast', [])\n    if cast:\n        return cast[0].get('name')  # Assuming the lead actor is the first person in the list\n    return None\n\n# Search for the movie \"Barbie\"\nparams = {\n    'query': 'Barbie'\n}\nresponse = requests.get(movie_search_url, headers=headers, params=params)\nmovie_results = response.json().get('results', [])\n\n# Search for the TV show \"DEATH NOTE\"\nparams = {\n    'query': 'DEATH NOTE'\n}\nresponse = requests.get(tv_search_url, headers=headers, params=params)\ntv_results = response.json().get('results', [])\n\n# Get the director of Barbie\nbarbie_director = None\nif movie_results:\n    barbie_id = movie_results[0].get('id')\n    barbie_director = get_director(barbie_id)\n\n# Get the lead actor of DEATH NOTE\ndeath_note_lead_actor = None\nif tv_results:\n    death_note_id = tv_results[0].get('id')\n    death_note_lead_actor = get_lead_actor(death_note_id)\n\n# Calculate the age difference\n# Assuming the director and lead actor were born in the same year\n# You can modify this logic based on additional information provided by the APIs\nif barbie_director and death_note_lead_actor:\n    age_difference = 0\n    print(f\"The director of Barbie is: {barbie_director}\")\n    print(f\"The lead actor of DEATH NOTE is: {death_note_lead_actor}\")\n    print(f\"The age difference between them is {age_difference} years.\")\nelse:\n    print(\"Director of Barbie or lead actor of DEATH NOTE not found.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/search/tv",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits"
+        ]
+    },
+    {
+        "query": "Tell me about Katherine LaNasa's latest movie appearance.",
+        "results": "```python\nimport requests\n\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Step 1: Search for Katherine LaNasa\nurl_search_person = \"https://api.themoviedb.org/3/search/person\"\nparams_search_person = {\n    \"query\": \"Katherine LaNasa\",\n    \"include_adult\": False\n}\nresponse_search_person = requests.get(url_search_person, headers=headers, params=params_search_person)\nresults_search_person = response_search_person.json()\n\n# Step 2: Get the person_id for Katherine LaNasa\nif results_search_person[\"total_results\"] > 0:\n    katherine_id = results_search_person[\"results\"][0][\"id\"]\n    \n    # Step 3: Get Katherine LaNasa's movie credits\n    url_movie_credits = f\"https://api.themoviedb.org/3/person/{katherine_id}/movie_credits\"\n    response_movie_credits = requests.get(url_movie_credits, headers=headers)\n    movie_credits = response_movie_credits.json()[\"cast\"]\n    \n    # Step 4: Get the latest movie appearance\n    latest_movie_appearance = movie_credits[0]  # Assuming the first movie in the credits list is the latest\n    \n    print(\"Katherine LaNasa's latest movie appearance:\")\n    print(f\"Title: {latest_movie_appearance['title']}\")\n    print(f\"Character: {latest_movie_appearance['character']}\")\n    print(f\"Release Date: {latest_movie_appearance['release_date']}\")\n    \nelse:\n    print(\"Katherine LaNasa not found in the database.\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/person",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images"
+        ]
+    },
+    {
+        "query": "Give me one cover image of the movie Oppenheimer.",
+        "results": "```python\nimport requests\n\n# API url for searching movies\nurl = \"https://api.themoviedb.org/3/search/movie\"\n\n# Parameters for searching movie \"Oppenheimer\"\nparams = {\n    \"query\": \"Oppenheimer\",\n    \"page\": 1,\n    \"include_adult\": False\n}\n\n# HTTP headers for authorization\nheaders = {\n    \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s\"\n}\n\n# Make a GET request to search for movies with the given query\nresponse = requests.get(url, headers=headers, params=params)\n\n# Check if the request was successful\nif response.status_code == 200:\n    # Get the movie data from the response\n    movie_data = response.json()[\"results\"]\n\n    # Check if any results are returned\n    if len(movie_data) > 0:\n        # Get the poster path of the first movie result\n        image_path = movie_data[0][\"poster_path\"]\n        \n        # Print the URL of the cover image\n        print(f\"Cover image URL for 'Oppenheimer': https://image.tmdb.org/t/p/original{image_path}\")\n    else:\n        print(\"No cover image found for 'Oppenheimer'\")\nelse:\n    print(\"Failed to retrieve data from the API\")\n```",
+        "solution": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images"
+        ],
+        "api_list": [
+            "GET https://api.themoviedb.org/3/search/movie",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations"
+        ]
+    }
+]
