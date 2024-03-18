@@ -401,7 +401,6 @@ def simplify_response_template(data):
                 data[k] = normalize(v)
     return data
 
-
 # def simplify_response_template1(data):
 #     results={}
 #     if 'required' in data and 'properties' in data:
@@ -621,18 +620,18 @@ class APIManager:
     def generate(self, query, tool_list):
         tool_doc = []
         for tool in tool_list:
-            doc = self.toolset.formulate(tool, is_execution_results=False,
-                                         is_request_body=False, is_request_type=False)
+            doc = self.toolset.formulate(tool, is_execution_results=True,
+                                         is_request_body=False, is_request_type=True)
             tool_doc.append(doc)
 
         tool_doc = '\n\n'.join([f'{i}. {e}' for i, e in enumerate(tool_doc, 1)])
 
-        system = """In this task, you are a software architect and you are provided a list of external APIs. You need to develop a class named `Solution` that contains several static functions. These static functions serve as encapsulations for the selected APIs.
+        system = """In this task, you are a software engineer and you are provided a list of external APIs. You need to develop a class named `Solution` that contains several static functions. These static functions serve as encapsulations for the selected APIs.
 
 More specifically, you need to:
 
-1. Select the appropriate APIs from the list to address the user's question. You should select all APIs that may be involved since in the subsequent stage we can only use your currently selected APIs to solve the question.
-2. Create a static method in the Solution class for each selected API. For each method, please provide a clear function signature for each method, including the function name, parameters.
+1. Select the appropriate APIs from the list to address the user's question. For each selected API, please create a static method in the Solution class, including the signature and implement details.
+2. You should select all APIs that may be involved since in the subsequent stage we can only use your currently selected APIs to solve the question.
 3. Add comments above each function to describe its purpose, inputs, and outputs. You should also add the url of the used APIs for each function.
 
 Here is a template of the generated programming framework:
@@ -655,7 +654,7 @@ class Solution:
         Which API to use:
         [only give the url of the selected API]
         \"\"\"
-        # [the implement details]
+        # [implement the function]
 ```
 """
 
