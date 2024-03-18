@@ -4,6 +4,14 @@ from utilize.apis import get_from_openai
 import spotipy
 import yaml
 import os
+from typing import Union
+from tqdm import tqdm
+from utilize.utilze import load_data
+import random
+import multiprocessing
+
+import tiktoken
+encoder = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
 class Base:
@@ -16,7 +24,7 @@ class Base:
         return sss
 
     def generate(self, messages):
-        res = get_from_openai(model_name=self.model_name, messages=messages)
+        res = get_from_openai(model_name=self.model_name, messages=messages,usage=True)
         self.token.append([res['usage'].completion_tokens, res['usage'].prompt_tokens, res['usage'].total_tokens])
         return self.normalize(res['content'])
 
@@ -118,9 +126,7 @@ class Tools:
         else:
             return data
 
-    def formulate(self, tool):
-        # print(tool)
-        doc = self.get_doc_by_name(tool)
+    def get_parameters(self, doc) -> str:
         if len(doc['parameter']) == 0:
             parameter = 'No extra parameter, just replace the `{variable}` in the url path with actual value.'
         else:
@@ -133,26 +139,29 @@ class Tools:
                     tmp += " (type: " + p['schema']['type'] + ")"
                 parameter.append(tmp)
             parameter = '\n'.join(parameter)
+        return parameter
+
+    def formulate(self, tool, is_description=True, is_parameters=True, is_request_type=True,
+                  is_execution_results=True, is_request_body=True):
         # print(tool)
-        response = json.dumps(doc['responses'], indent=4)
-        requestBody = json.dumps(doc['requestBody'], indent=4)
-        text_doc = """API url: {url}
-### Request type:
-{method}
-### Description
-{description}
-### Parameter
-{parameter}
-### Execution result
-{responses}
-### Request body
-{requestBody}
-""".format(url=doc['url'],
-           description=self.normalize(doc['description']),
-           parameter=parameter,
-           responses=response,
-           requestBody=requestBody,
-           method=doc['method'])
+        doc = self.get_doc_by_name(tool)
+        text_doc = ["""API url: """+doc['url']]
+        if is_request_type and 'method' in doc:
+            method = """### Request type\n""" + doc['method']
+            text_doc.append(method)
+        if is_description and 'description' in doc:
+            description = """### Description\n""" + self.normalize(doc['description'])
+            text_doc.append(description)
+        if is_parameters:
+            parameters = '### Parameter\n' + self.get_parameters(doc)
+            text_doc.append(parameters)
+        if is_execution_results and 'responses' in doc:
+            response = '### Execution result\n' + json.dumps(doc['responses'], indent=4)
+            text_doc.append(response)
+        if is_request_body and 'requestBody' in doc:
+            requestBody = '### Request body\n' + json.dumps(doc['requestBody'], indent=4)
+            text_doc.append(requestBody)
+        text_doc = '\n'.join(text_doc)
         return text_doc
 
     # def simplify_response_template(self,data):
@@ -289,6 +298,9 @@ Your output:
         # print(instruction)
         return instruction
 
+    def get_tools_instruction(self,tools):
+        docs = [self.formulate(tool) for i, tool in enumerate(tools, start=1)]
+        return docs
 
 class SpotifyTools(Tools):
 
@@ -593,9 +605,134 @@ Your output: """.format(instruction=instruction, candidate='\n'.join([f'{i}. {e}
         res = get_from_openai(model_name='gpt-3.5-turbo-instruct', prompt=prompt, temp=0)['content']
         return res
 
-
-
     # reasoning capability is out of the code
     # semantic capability is out of the code
     # answer gathering
     #
+
+
+class APIManager:
+
+    def __init__(self, model_name='gpt-3.5-turbo', toolset: Union[Tools, TMDBTools, SpotifyTools] = None):
+        self.model_name = model_name
+        self.token = []
+        self.toolset = toolset
+
+    def generate(self, query, tool_list):
+        tool_doc = []
+        for tool in tool_list:
+            doc = self.toolset.formulate(tool, is_execution_results=False,
+                                         is_request_body=False, is_request_type=False)
+            tool_doc.append(doc)
+
+        tool_doc = '\n\n'.join([f'{i}. {e}' for i, e in enumerate(tool_doc, 1)])
+
+        system = """In this task, you are a software architect and you are provided a list of external APIs. You need to develop a class named `Solution` that contains several static functions. These static functions serve as encapsulations for the selected APIs.
+
+More specifically, you need to:
+
+1. Select the appropriate APIs from the list to address the user's question. You should select all APIs that may be involved since in the subsequent stage we can only use your currently selected APIs to solve the question.
+2. Create a static method in the Solution class for each selected API. For each method, please provide a clear function signature for each method, including the function name, parameters.
+3. Add comments above each function to describe its purpose, inputs, and outputs. You should also add the url of the used APIs for each function.
+
+Here is a template of the generated programming framework:
+```python
+class Solution:
+
+    @staticmethod
+    def func1(param1: [type of param1], param2: [type of param2]) -> [type of output]:
+        \"\"\"
+        Purpose:
+        [The description of this function]
+        
+        Inputs:
+        - param1: [the description of param1]
+        - param2: [the description of param2]
+
+        Outputs:
+        [The description of the return value]
+        
+        Which API to use:
+        [only give the url of the selected API]
+        \"\"\"
+        # [the implement details]
+```
+"""
+
+        user_instruction = f"""Here is the user query: {query}. 
+
+Please first select appropriate APIs from the following APIs list. Then, write a Python class named `Solution` to guide another model which APIs to use and how these APIs to use for solving the query.  
+{tool_doc}
+
+Note: you should only give the Python code (enclosed with ```python [Your code]```. 
+
+Your output:
+```python
+class Solution:
+    ...
+```"""
+        res = get_from_openai(model_name=self.model_name,
+                              messages=[{'role': 'user', 'content': system},
+                                        {'role': 'user', 'content': user_instruction}],
+                              usage=True)
+        # print(user_instruction)
+        # print(res['usage'])
+        return res['content']
+
+import math
+
+def multi_process_func(ranks, func, data, model):
+    pools = multiprocessing.Pool(processes=len(ranks))
+    length = math.ceil(len(data) // len(ranks) )
+    collects = []
+    for ids, rank in enumerate(ranks):
+        collect = data[ids * length:(ids + 1) * length]
+        collects.append(pools.apply_async(func, (rank, collect, model)))
+    pools.close()
+    pools.join()
+    results = []
+    for rank, result in zip(ranks, collects):
+        r, res = result.get()
+        assert r == rank
+        results.extend(res)
+    return results
+
+def func(rank, data, model_name):
+    toolsets = TMDBTools(
+        system='Here are some APIs used to access the TMDB platform. You need to answer the question by writing python code to call appreciate APIs and `print` the final answer. The API can be accessed via HTTP request. ',
+        oas_spec='../dataset/tmdb_api_spec.json',
+    )
+    model = APIManager(model_name='gpt-3.5-turbo', toolset=toolsets)
+    negative = toolsets.get_tool_list()
+    results=[]
+
+    for line in tqdm(data):
+        # print(line)
+        tools = copy.deepcopy(line['solution'])
+        while len(tools) < 20:
+            tool = negative[random.randint(0, 10000) % len(negative)]
+            if tool not in tools:
+                tools.append(tool)
+        line['api_list'] = tools
+
+        # try:
+        res = model.generate(query=line['query'], tool_list=tools)
+        # encoded_docs = encoder.encode(instruction)
+        # print(len(encoded_docs))
+        line['output']=res
+        line['match']=len([e for e in line['solution'] if e.split(' ')[-1].strip() in res]),len(line['solution'])
+
+        # print('-' * 50)
+        # print(line['solution'])
+        # print(res)
+
+        results.append(line)
+
+    return rank, results
+
+
+if __name__ == '__main__':
+    data = load_data('/Users/shizhl/Paper2024/ProTool/dataset/tmdb.json')
+    results = multi_process_func(ranks=list(range(10)), func=func, data=data, model='gpt-3.5-turbo')
+    for line in results:
+        print(line['match'])

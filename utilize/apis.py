@@ -40,7 +40,7 @@ def get_from_openai(model_name='gpt-3.5-turbo', base_url=None, api_key=None,
 
             content = response.choices[0].message.content if n == 1 else [res.message.content for res in response.choices]
             results = {"content": content}
-            if usage == False:
+            if usage == True:
                 results['usage'] = response.usage
             return results
         # except:
