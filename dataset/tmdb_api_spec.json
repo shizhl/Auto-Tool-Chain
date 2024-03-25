@@ -7,7 +7,7 @@
     ],
     "endpoints": [
         [
-            "GET /movie/{movie_id}/keywords",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/keywords",
             "Get the keywords that have been added to a movie.",
             {
                 "description": "Get the keywords that have been added to a movie.",
@@ -56,7 +56,7 @@
             }
         ],
         [
-            "GET /tv/popular",
+            "GET https://api.themoviedb.org/3/tv/popular",
             "Get a list of the current popular TV shows on TMDb. This list updates daily.",
             {
                 "description": "Get a list of the current popular TV shows on TMDb. This list updates daily.",
@@ -569,7 +569,7 @@
             }
         ],
         [
-            "GET /person/{person_id}",
+            "GET https://api.themoviedb.org/3/person/{person_id}",
             "Get the primary person details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 17, 2018 | Added the `known_for_department` field. |\n| April 26, 2018 | Added the [translations](#endpoint:CSaMjCxXAtGpxNGfS) method. |\n| November 9, 2016 | Biographies are now translatable on TMDb. This means you can query person details with a language parameter. |",
             {
                 "description": "Get the primary person details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 17, 2018 | Added the `known_for_department` field. |\n| April 26, 2018 | Added the [translations](#endpoint:CSaMjCxXAtGpxNGfS) method. |\n| November 9, 2016 | Biographies are now translatable on TMDb. This means you can query person details with a language parameter. |",
@@ -673,7 +673,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/reviews",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/reviews",
             "Get the user reviews for a movie.",
             {
                 "description": "Get the user reviews for a movie.",
@@ -753,7 +753,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/release_dates",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/release_dates",
             "Get the release date along with the certification for a movie.\n\nRelease dates support different types:\n\n1. Premiere\n2. Theatrical (limited)\n3. Theatrical\n4. Digital\n5. Physical\n6. TV",
             {
                 "description": "Get the release date along with the certification for a movie.\n\nRelease dates support different types:\n\n1. Premiere\n2. Theatrical (limited)\n3. Theatrical\n4. Digital\n5. Physical\n6. TV",
@@ -1360,7 +1360,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/credits",
             "Get the credits (cast, crew and guest stars) for a TV episode.",
             {
                 "description": "Get the credits (cast, crew and guest stars) for a TV episode.",
@@ -2046,7 +2046,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/images",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/images",
             "Get the images that belong to a movie.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
             {
                 "description": "Get the images that belong to a movie.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
@@ -2167,7 +2167,7 @@
             }
         ],
         [
-            "GET /search/tv",
+            "GET https://api.themoviedb.org/3/search/tv",
             "Search for a TV show.",
             {
                 "description": "Search for a TV show.",
@@ -2322,7 +2322,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}/episode/{episode_number}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}",
             "Get the TV episode details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| June 1, 2018 | Added the [translations](#endpoint:5SFwZar3LkP99QMp7) method. |",
             {
                 "description": "Get the TV episode details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| June 1, 2018 | Added the [translations](#endpoint:5SFwZar3LkP99QMp7) method. |",
@@ -2555,7 +2555,7 @@
             }
         ],
         [
-            "GET /network/{network_id}/images",
+            "GET https://api.themoviedb.org/3/network/{network_id}/images",
             "Get the TV network logos by id.\n\nThere are two image formats that are supported for networks, PNG's and SVG's. You can see which type the original file is by looking at the `file_type` field. We prefer SVG's as they are resolution independent and as such, the width and height are only there to reflect the original asset that was uploaded. An SVG can be scaled properly beyond those dimensions if you call them as a PNG.\n\nFor more information about how SVG's and PNG's can be used, take a read through [this document](#docTextSection:mXP9B2uzoDJFguDZv).",
             {
                 "description": "Get the TV network logos by id.\n\nThere are two image formats that are supported for networks, PNG's and SVG's. You can see which type the original file is by looking at the `file_type` field. We prefer SVG's as they are resolution independent and as such, the width and height are only there to reflect the original asset that was uploaded. An SVG can be scaled properly beyond those dimensions if you call them as a PNG.\n\nFor more information about how SVG's and PNG's can be used, take a read through [this document](#docTextSection:mXP9B2uzoDJFguDZv).",
@@ -2632,7 +2632,7 @@
             }
         ],
         [
-            "GET /genre/tv/list",
+            "GET https://api.themoviedb.org/3/genre/tv/list",
             "Get the list of official genres for TV shows.",
             {
                 "description": "Get the list of official genres for TV shows.",
@@ -2677,7 +2677,7 @@
             }
         ],
         [
-            "GET /search/movie",
+            "GET https://api.themoviedb.org/3/search/movie",
             "Search for movies.",
             {
                 "description": "Search for movies.",
@@ -3092,7 +3092,7 @@
             }
         ],
         [
-            "GET /discover/movie",
+            "GET https://api.themoviedb.org/3/discover/movie",
             "Discover movies by different types of data like average rating, number of votes, genres and certifications. You can get a valid list of certifications from the [certifications list](#endpoint:faFKjuKG2HnwexAWM) method.\n\nDiscover also supports a nice list of sort options. See below for all of the available options.\n\nPlease note, when using `certification` \\ `certification.lte` you must also specify `certification_country`. These two parameters work together in order to filter the results. You can only filter results with the countries we have added to our [certifications list](#endpoint:faFKjuKG2HnwexAWM).\n\nIf you specify the `region` parameter, the regional release date will be used instead of the primary release date. The date returned will be the first date based on your query (ie. if a `with_release_type` is specified). It's important to note the order of the release types that are used. Specifying \"2|3\" would return the limited theatrical release date as opposed to \"3|2\" which would return the theatrical date.\n\nAlso note that a number of filters support being comma (`,`) or pipe (`|`) separated. Comma's are treated like an `AND` and query while pipe's are an `OR`. \n\nSome examples of what can be done with discover can be found [here](https://www.themoviedb.org/documentation/api/discover).",
             {
                 "description": "Discover movies by different types of data like average rating, number of votes, genres and certifications. You can get a valid list of certifications from the [certifications list](#endpoint:faFKjuKG2HnwexAWM) method.\n\nDiscover also supports a nice list of sort options. See below for all of the available options.\n\nPlease note, when using `certification` \\ `certification.lte` you must also specify `certification_country`. These two parameters work together in order to filter the results. You can only filter results with the countries we have added to our [certifications list](#endpoint:faFKjuKG2HnwexAWM).\n\nIf you specify the `region` parameter, the regional release date will be used instead of the primary release date. The date returned will be the first date based on your query (ie. if a `with_release_type` is specified). It's important to note the order of the release types that are used. Specifying \"2|3\" would return the limited theatrical release date as opposed to \"3|2\" which would return the theatrical date.\n\nAlso note that a number of filters support being comma (`,`) or pipe (`|`) separated. Comma's are treated like an `AND` and query while pipe's are an `OR`. \n\nSome examples of what can be done with discover can be found [here](https://www.themoviedb.org/documentation/api/discover).",
@@ -3888,7 +3888,7 @@
             }
         ],
         [
-            "GET /movie/upcoming",
+            "GET https://api.themoviedb.org/3/movie/upcoming",
             "Get a list of upcoming movies in theatres. This is a release type query that looks for all movies that have a release type of 2 or 3 within the specified date range.\n\nYou can optionally specify a `region` prameter which will narrow the search to only look for theatrical release dates within the specified country.",
             {
                 "description": "Get a list of upcoming movies in theatres. This is a release type query that looks for all movies that have a release type of 2 or 3 within the specified date range.\n\nYou can optionally specify a `region` prameter which will narrow the search to only look for theatrical release dates within the specified country.",
@@ -4394,7 +4394,7 @@
             }
         ],
         [
-            "GET /credit/{credit_id}",
+            "GET https://api.themoviedb.org/3/credit/{credit_id}",
             "Get a movie or TV credit details by id.\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 13, 2018 | Movie credits are now supported. |",
             {
                 "description": "Get a movie or TV credit details by id.\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 13, 2018 | Movie credits are now supported. |",
@@ -4508,7 +4508,7 @@
             }
         ],
         [
-            "GET /person/{person_id}/tv_credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/tv_credits",
             "Get the TV show credits for a person.\n\nYou can query for some extra details about the credit with the [credit method](#endpoint:xPWdEBLkvCNZSicLN).",
             {
                 "description": "Get the TV show credits for a person.\n\nYou can query for some extra details about the credit with the [credit method](#endpoint:xPWdEBLkvCNZSicLN).",
@@ -5303,7 +5303,7 @@
             }
         ],
         [
-            "GET /tv/latest",
+            "GET https://api.themoviedb.org/3/tv/latest",
             "Get the most newly created TV show. This is a live response and will continuously change.",
             {
                 "description": "Get the most newly created TV show. This is a live response and will continuously change.",
@@ -5524,7 +5524,7 @@
             }
         ],
         [
-            "GET /company/{company_id}",
+            "GET https://api.themoviedb.org/3/company/{company_id}",
             "Get a companies details by id.",
             {
                 "description": "Get a companies details by id.",
@@ -5582,7 +5582,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/images",
             "Get the images that belong to a TV show.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
             {
                 "description": "Get the images that belong to a TV show.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
@@ -7520,7 +7520,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/credits",
             "Get the credits for TV season.",
             {
                 "description": "Get the credits for TV season.",
@@ -7995,7 +7995,7 @@
             }
         ],
         [
-            "GET /movie/now_playing",
+            "GET https://api.themoviedb.org/3/movie/now_playing",
             "Get a list of movies in theatres. This is a release type query that looks for all movies that have a release type of 2 or 3 within the specified date range.\n\nYou can optionally specify a `region` prameter which will narrow the search to only look for theatrical release dates within the specified country.",
             {
                 "description": "Get a list of movies in theatres. This is a release type query that looks for all movies that have a release type of 2 or 3 within the specified date range.\n\nYou can optionally specify a `region` prameter which will narrow the search to only look for theatrical release dates within the specified country.",
@@ -8515,7 +8515,7 @@
             }
         ],
         [
-            "GET /review/{review_id}",
+            "GET https://api.themoviedb.org/3/review/{review_id}",
             "Get the review for a movie",
             {
                 "responses": {
@@ -8571,7 +8571,7 @@
             }
         ],
         [
-            "GET /tv/on_the_air",
+            "GET https://api.themoviedb.org/3/tv/on_the_air",
             "Get a list of shows that are currently on the air.\n\nThis query looks for any TV show that has an episode with an air date in the next 7 days.",
             {
                 "description": "Get a list of shows that are currently on the air.\n\nThis query looks for any TV show that has an episode with an air date in the next 7 days.",
@@ -9075,7 +9075,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}",
             "Get the primary information about a movie.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).",
             {
                 "description": "Get the primary information about a movie.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).",
@@ -9341,7 +9341,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/images",
             "Get the images that belong to a TV season.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
             {
                 "description": "Get the images that belong to a TV season.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
@@ -9606,7 +9606,7 @@
             }
         ],
         [
-            "GET /company/{company_id}/images",
+            "GET https://api.themoviedb.org/3/company/{company_id}/images",
             "Get a companies logos by id.\n\nThere are two image formats that are supported for companies, PNG's and SVG's. You can see which type the original file is by looking at the `file_type` field. We prefer SVG's as they are resolution independent and as such, the width and height are only there to reflect the original asset that was uploaded. An SVG can be scaled properly beyond those dimensions if you call them as a PNG.\n\nFor more information about how SVG's and PNG's can be used, take a read through [this document](#docTextSection:mXP9B2uzoDJFguDZv).",
             {
                 "description": "Get a companies logos by id.\n\nThere are two image formats that are supported for companies, PNG's and SVG's. You can see which type the original file is by looking at the `file_type` field. We prefer SVG's as they are resolution independent and as such, the width and height are only there to reflect the original asset that was uploaded. An SVG can be scaled properly beyond those dimensions if you call them as a PNG.\n\nFor more information about how SVG's and PNG's can be used, take a read through [this document](#docTextSection:mXP9B2uzoDJFguDZv).",
@@ -9683,7 +9683,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/reviews",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/reviews",
             "Get the reviews for a TV show.",
             {
                 "description": "Get the reviews for a TV show.",
@@ -9769,7 +9769,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/similar",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/similar",
             "Get a list of similar TV shows. These items are assembled by looking at keywords and genres.",
             {
                 "description": "Get a list of similar TV shows. These items are assembled by looking at keywords and genres.",
@@ -10294,7 +10294,7 @@
             }
         ],
         [
-            "GET /network/{network_id}",
+            "GET https://api.themoviedb.org/3/network/{network_id}",
             "Get the details of a network.",
             {
                 "description": "Get the details of a network.",
@@ -10339,7 +10339,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/recommendations",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/recommendations",
             "Get the list of TV show recommendations for this item.",
             {
                 "description": "Get the list of TV show recommendations for this item.",
@@ -10864,7 +10864,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}/episode/{episode_number}/images",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}/episode/{episode_number}/images",
             "Get the images that belong to a TV episode.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
             {
                 "description": "Get the images that belong to a TV episode.\n\nQuerying images with a `language` parameter will filter the results. If you want to include a fallback language (especially useful for backdrops) you can use the `include_image_language` parameter. This should be a comma seperated value like so: `include_image_language=en,null`.",
@@ -11004,7 +11004,7 @@
             }
         ],
         [
-            "GET /movie/popular",
+            "GET https://api.themoviedb.org/3/movie/popular",
             "Get a list of the current popular movies on TMDb. This list updates daily.",
             {
                 "description": "Get a list of the current popular movies on TMDb. This list updates daily.",
@@ -11526,7 +11526,7 @@
             }
         ],
         [
-            "GET /tv/airing_today",
+            "GET https://api.themoviedb.org/3/tv/airing_today",
             "Get a list of TV shows that are airing today. This query is purely day based as we do not currently support airing times.\n\nYou can specify a [timezone](endpoint:KQ4CDdEoWKJYLkrhS) to offset the day calculation. Without a specified timezone, this query defaults to EST (Eastern Time UTC-05:00).",
             {
                 "description": "Get a list of TV shows that are airing today. This query is purely day based as we do not currently support airing times.\n\nYou can specify a [timezone](endpoint:KQ4CDdEoWKJYLkrhS) to offset the day calculation. Without a specified timezone, this query defaults to EST (Eastern Time UTC-05:00).",
@@ -12015,7 +12015,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/keywords",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/keywords",
             "Get the keywords that have been added to a TV show.",
             {
                 "description": "Get the keywords that have been added to a TV show.",
@@ -12088,7 +12088,7 @@
             }
         ],
         [
-            "GET /search/person",
+            "GET https://api.themoviedb.org/3/search/person",
             "Search for people.",
             {
                 "description": "Search for people.",
@@ -13413,7 +13413,7 @@
             }
         ],
         [
-            "GET /search/company",
+            "GET https://api.themoviedb.org/3/search/company",
             "Search for companies.",
             {
                 "description": "Search for companies.",
@@ -13585,7 +13585,7 @@
             }
         ],
         [
-            "GET /discover/tv",
+            "GET https://api.themoviedb.org/3/discover/tv",
             "Discover TV shows by different types of data like average rating, number of votes, genres, the network they aired on and air dates.\n\nDiscover also supports a nice list of sort options. See below for all of the available options.\n\nAlso note that a number of filters support being comma (`,`) or pipe (`|`) separated. Comma's are treated like an `AND` and query while pipe's are an `OR`. \n\nSome examples of what can be done with discover can be found [here](https://www.themoviedb.org/documentation/api/discover).",
             {
                 "description": "Discover TV shows by different types of data like average rating, number of votes, genres, the network they aired on and air dates.\n\nDiscover also supports a nice list of sort options. See below for all of the available options.\n\nAlso note that a number of filters support being comma (`,`) or pipe (`|`) separated. Comma's are treated like an `AND` and query while pipe's are an `OR`. \n\nSome examples of what can be done with discover can be found [here](https://www.themoviedb.org/documentation/api/discover).",
@@ -13956,7 +13956,7 @@
             }
         ],
         [
-            "GET /movie/top_rated",
+            "GET https://api.themoviedb.org/3/movie/top_rated",
             "Get the top rated movies on TMDb.",
             {
                 "description": "Get the top rated movies on TMDb.",
@@ -14463,7 +14463,7 @@
             }
         ],
         [
-            "GET /movie/latest",
+            "GET https://api.themoviedb.org/3/movie/latest",
             "Get the most newly created movie. This is a live response and will continuously change.",
             {
                 "description": "Get the most newly created movie. This is a live response and will continuously change.",
@@ -14617,7 +14617,7 @@
             }
         ],
         [
-            "GET /tv/top_rated",
+            "GET https://api.themoviedb.org/3/tv/top_rated",
             "Get a list of the top rated TV shows on TMDb.",
             {
                 "description": "Get a list of the top rated TV shows on TMDb.",
@@ -15136,7 +15136,7 @@
             }
         ],
         [
-            "GET /trending/{media_type}/{time_window}",
+            "GET https://api.themoviedb.org/3/trending/{media_type}/{time_window}",
             "Get the daily or weekly trending items. The daily trending list tracks items over the period of a day while items have a 24 hour half life. The weekly list tracks items over a 7 day period, with a 7 day half life.\n\n#### Valid Media Types\n\n| **Media Type** | **Description** |\n| - | - |\n| all | Include all movies, TV shows and people in the results as a global trending list. |\n| movie | Show the trending movies in the results. |\n| tv | Show the trending TV shows in the results. |\n| person | Show the trending people in the results. |\n\n#### Valid Time Windows\n\n| **Time Window** | **Description** |\n| - | - |\n| day | View the trending list for the day. |\n| week | View the trending list for the week. |",
             {
                 "description": "Get the daily or weekly trending items. The daily trending list tracks items over the period of a day while items have a 24 hour half life. The weekly list tracks items over a 7 day period, with a 7 day half life.\n\n#### Valid Media Types\n\n| **Media Type** | **Description** |\n| - | - |\n| all | Include all movies, TV shows and people in the results as a global trending list. |\n| movie | Show the trending movies in the results. |\n| tv | Show the trending TV shows in the results. |\n| person | Show the trending people in the results. |\n\n#### Valid Time Windows\n\n| **Time Window** | **Description** |\n| - | - |\n| day | View the trending list for the day. |\n| week | View the trending list for the week. |",
@@ -15627,7 +15627,7 @@
             }
         ],
         [
-            "GET /genre/movie/list",
+            "GET https://api.themoviedb.org/3/genre/movie/list",
             "Get the list of official genres for movies.",
             {
                 "description": "Get the list of official genres for movies.",
@@ -15672,7 +15672,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/season/{season_number}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}",
             "Get the TV season details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).",
             {
                 "description": "Get the TV season details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).",
@@ -17211,7 +17211,7 @@
             }
         ],
         [
-            "GET /collection/{collection_id}",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}",
             "Get collection details by id.\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| March 16, 2018 | Added the [translations](#endpoint:bhcsxEgRvyk3N7FnD) method. |",
             {
                 "description": "Get collection details by id.\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| March 16, 2018 | Added the [translations](#endpoint:bhcsxEgRvyk3N7FnD) method. |",
@@ -17329,7 +17329,7 @@
             }
         ],
         [
-            "GET /person/{person_id}/images",
+            "GET https://api.themoviedb.org/3/person/{person_id}/images",
             "Get the images for a person.",
             {
                 "description": "Get the images for a person.",
@@ -17414,7 +17414,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}",
             "Get the primary TV show details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 17, 2018 | We now return `last_episode_to_air` and `next_episode_to_air` fields. |\n| March 12, 2018 | Networks return proper logos and we introduced SVG support. |\n| March 8, 2018 | The `seasons` field now returns the translated names and overviews. |",
             {
                 "description": "Get the primary TV show details by id.\n\nSupports `append_to_response`. Read more about this [here](#docTextSection:JdZq8ctmcxNqyLQjp).\n\n#### Recent Changes\n\n| **Date** | **Change** |\n| - | - |\n| July 17, 2018 | We now return `last_episode_to_air` and `next_episode_to_air` fields. |\n| March 12, 2018 | Networks return proper logos and we introduced SVG support. |\n| March 8, 2018 | The `seasons` field now returns the translated names and overviews. |",
@@ -17850,7 +17850,7 @@
             }
         ],
         [
-            "GET /person/popular",
+            "GET https://api.themoviedb.org/3/person/popular",
             "Get the list of popular people on TMDb. This list updates daily.",
             {
                 "description": "Get the list of popular people on TMDb. This list updates daily.",
@@ -19505,7 +19505,7 @@
             }
         ],
         [
-            "GET /collection/{collection_id}/images",
+            "GET https://api.themoviedb.org/3/collection/{collection_id}/images",
             "Get the images for a collection by id.",
             {
                 "description": "Get the images for a collection by id.",
@@ -19614,7 +19614,7 @@
             }
         ],
         [
-            "GET /tv/{tv_id}/credits",
+            "GET https://api.themoviedb.org/3/tv/{tv_id}/credits",
             "Get the credits (cast and crew) that have been added to a TV show.",
             {
                 "description": "Get the credits (cast and crew) that have been added to a TV show.",
@@ -19936,7 +19936,7 @@
             }
         ],
         [
-            "GET /person/{person_id}/movie_credits",
+            "GET https://api.themoviedb.org/3/person/{person_id}/movie_credits",
             "Get the movie credits for a person, the results contains various information such as popularity and release date.",
             {
                 "description": "Get the movie credits for a person, the results contains various information such as popularity and release date.",
@@ -22581,7 +22581,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/recommendations",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/recommendations",
             "Get a list of recommended movies for a movie.",
             {
                 "description": "Get a list of recommended movies for a movie.",
@@ -22707,7 +22707,7 @@
             }
         ],
         [
-            "GET /search/collection",
+            "GET https://api.themoviedb.org/3/search/collection",
             "Search for collections.",
             {
                 "description": "Search for collections.",
@@ -22796,7 +22796,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/credits",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/credits",
             "Get the cast and crew for a movie.",
             {
                 "description": "Get the cast and crew for a movie.",
@@ -24620,7 +24620,7 @@
             }
         ],
         [
-            "GET /movie/{movie_id}/similar",
+            "GET https://api.themoviedb.org/3/movie/{movie_id}/similar",
             "Get a list of similar movies. This is **not** the same as the \"Recommendation\" system you see on the website.\n\nThese items are assembled by looking at keywords and genres.",
             {
                 "description": "Get a list of similar movies. This is **not** the same as the \"Recommendation\" system you see on the website.\n\nThese items are assembled by looking at keywords and genres.",

@@ -1,36 +1,43 @@
 import requests
-from utilize.apis import get_from_openai
+import json
 
-access_token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
-headers = {
-    'Authorization': f'Bearer {access_token}'
-}
-# Define the API endpoint to get the TV show id for Breaking Bad
-url_search_tv = "https://api.themoviedb.org/3/search/tv"
-params_search_tv = {
-    "query": "Breaking Bad"
-}
-response_search_tv = requests.get(url_search_tv, headers=headers, params=params_search_tv)
-search_results = response_search_tv.json()
+headers = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'}
 
-# Extract the TV show id for Breaking Bad
-tv_id = search_results['results'][0]['id']
+code = """import requests
+import json
 
-# Call the API to get reviews for Breaking Bad
-url_reviews = f"https://api.themoviedb.org/3/tv/{tv_id}/reviews"
-params_reviews = {
-    "page": 1
-}
-response_reviews = requests.get(url_reviews, headers=headers, params=params_reviews)
-reviews = response_reviews.json()
+url = "https://api.themoviedb.org/3/movie/550/keywords"
+params = {}
+response = requests.get(url, headers=headers, params=params)
+print(json.dumps(response.json()))
+"""
 
-# Print the review for Breaking Bad
-print("Review for Breaking Bad:")
-print(reviews['results'][0]['content'])
+code = '\n'.join(['\t'+e.strip() for e in code.split('\n')])
 
-# Summarize the review using a generic instruction
-instruction = "Summarize the review for Breaking Bad"
-print(reviews['results'][0]['content'])
+exec_code = """import sys
+from io import StringIO
+import requests
 
-print("\nSummary of the review:")
+# 重定向 stdout
+old_stdout = sys.stdout
+redirected_output = StringIO()
+sys.stdout = redirected_output
 
+headers = {{
+    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
+}}
+
+try:
+{code}
+except Exception as e:
+    # 捕获异常信息
+    channel.send((str(e), False))
+else:
+    # 如果没有异常发生，恢复原始 stdout，并获取重定向输出的内容
+    sys.stdout = old_stdout
+    output = redirected_output.getvalue()
+    # 发送标准输出内容和任何异常信息
+    channel.send((output, True))
+""".format(code=code)
+
+print(exec_code)

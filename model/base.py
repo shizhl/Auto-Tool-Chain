@@ -25,8 +25,8 @@ class Base:
 
     def generate(self, messages):
         res = get_from_openai(model_name=self.model_name, messages=messages,usage=True)
-        self.token.append([res['usage'].completion_tokens, res['usage'].prompt_tokens, res['usage'].total_tokens])
-        return self.normalize(res['content'])
+        self.token.append(res['usage'])
+        return self.normalize(res['content']),res['usage']
 
     def get_token(self):
         tmp = []
@@ -40,13 +40,12 @@ class Tools:
     def __init__(self, system, oas_spec):
         self.system = system
         self.api_spec = json.load(open(oas_spec))
-        self.api_spec = json.load(open(oas_spec))
         self.endpoint = {}
         self.host = self.api_spec['servers'][0]['url']
         for line in self.api_spec['endpoints']:
             # print(line)
             tmp = {
-                "name": line[0].split(' ')[0] + ' ' + self.host + line[0].split(' ')[-1],  # unique id for each api
+                "name": line[0] if self.host in line[0] else line[0].split(' ')[0] + ' ' + self.host + line[0].split(' ')[-1] ,  # unique id for each api
                 "url": self.host + line[0].split(' ')[-1],
                 "method": line[0].split(' ')[0],
                 "description": self.normalize(line[1]),
@@ -59,6 +58,10 @@ class Tools:
                 tmp['responses'] = self.simplify_dict(tmp['responses'])
             else:
                 tmp['responses'] = 'This API has no return value.'
+            if '_responses_json' in line[-1]:
+                tmp['_responses_json'] = line[-1]['_responses_json']
+            if '_responses_yaml' in line[-1]:
+                tmp['_responses_yaml'] = line[-1]['_responses_yaml']
             if 'requestBody' in line[-1]:
                 tmp['requestBody'] = line[-1]['requestBody']['content']['application/json']["schema"]['properties']
                 # tmp['requestBody'] = self.simplify_dict({"type":"",'properties':tmp['requestBody']})['properties']
@@ -142,7 +145,7 @@ class Tools:
         return parameter
 
     def formulate(self, tool, is_description=True, is_parameters=True, is_request_type=True,
-                  is_execution_results=True, is_request_body=True):
+                  execution_results_type='responses', is_request_body=True):
         # print(tool)
         doc = self.get_doc_by_name(tool)
         text_doc = ["""API url: """+doc['url']]
@@ -155,8 +158,11 @@ class Tools:
         if is_parameters:
             parameters = '### Parameter\n' + self.get_parameters(doc)
             text_doc.append(parameters)
-        if is_execution_results and 'responses' in doc:
-            response = '### Execution result\n' + json.dumps(doc['responses'], indent=4)
+        if execution_results_type is not None and execution_results_type in doc:
+            if 'yaml' in execution_results_type:
+                response = '### Execution result specification\n' + str(doc[execution_results_type])
+            else:
+                response = '### Execution result specification\n' + json.dumps(doc[execution_results_type], indent=4)
             text_doc.append(response)
         if is_request_body and 'requestBody' in doc:
             requestBody = '### Request body\n' + json.dumps(doc['requestBody'], indent=4)
@@ -228,8 +234,19 @@ class TMDBTools(Tools):
             'Authorization': f'Bearer {access_token}'
         }
 
-    def get_instruction(self, query, tools, LM_function=False):
-        docs = [f'{i}. ' + self.formulate(tool) for i, tool in enumerate(tools, start=1)]
+    def get_instruction(self, query, tools, LM_function=False,
+                        is_description=True,
+                        is_parameters=True,
+                        is_request_type=True,
+                        execution_results_type='responses',
+                        is_request_body=True
+                        ):
+        docs = [f'{i}. ' + self.formulate(tool,is_description=is_description,
+                                          is_parameters=is_parameters,
+                                          is_request_body=is_request_body,
+                                          execution_results_type=execution_results_type,
+                                          is_request_type=is_request_type)
+                for i, tool in enumerate(tools, start=1)]
         if LM_function == False:
             instruction = """{system}
 Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
@@ -255,47 +272,107 @@ Query: {query}
 Your output:
 ```python
 [Please write the code]
-```""".format(system=self.system, header=json.dumps(self.header, indent=4), query=query, docs='\n'.join(docs))
+```""".format(system=self.system, header=json.dumps(self.header, indent=4), query=query, docs='\n\n'.join(docs))
         else:
-            LM_functions = [
-                LLMTools.document['vague_match_function'],
-                LLMTools.document['personalized_selection_from_list'],
-                LLMTools.document['generic_instructional_function'],
-            ]
-            LM_functions = [f"{i}. function: {e}" for i, e in enumerate(LM_functions, start=1)]
-            instruction = """{system}
-## OpenAPI API 
-Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
+            system_instruction = """In this task, you should answer the user's query by using the provided OpenAPI API.
+Specifically, you should write Python code to call the appreciate APIs to obtain the required information. Then, you are provided large language models (LLMs) to help you process the text data, e.g., text summarization and sentiment analysis. You can customize the LLMs' function using specific instructions."""
+
+            openapi = """# OpenAPIs List
+Here are the OpenAPI specifications of given APIs, including their HTTP URL, description, arguments, and execution results.
 {docs}
 
-You should use the following Http header to call the API:
+You should use the following HTTP header to call the API:
 ```python
 headers = {header}
 ```
-Note: I will give you 'headers', do not make up one, just reference it in your code. Here is an example to request the API:
+Note: I will give you 'headers', do not make one, just reference it in your code. Here is an example to request the API:
 ```python
 import requests
 url = "<The API url selected from the above APIs>"
 params = "<The params dict>"
-response = requests.get(url, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
+response = requests.get(URL, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
 ```
-If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the url.
+If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the URL.
 
-Based on provided APIs, please write python code to call API and solve it. Try to write correct Python Code and avoid grammar error, e.g. `variable is not defined`. 
+Based on the provided APIs, please write Python code to call the API and solve it. Try to write correct Python Code and avoid grammar errors, e.g. `variable is not defined`.
+""".format(header=json.dumps(self.header, indent=4), docs='\n\n'.join(docs))
 
-## Pre-defined Python function
-I also provide some commonly-used python functions. These functions has been pre-defined, and you should directly use it in your output. Please always use these functions when the above list encounter an exceptional or the results is an empty list or None.
-{LM_functions}
+            LLM_api = """# Customize Your Own Function using `LLMs`
+To process the text information, you can instruct the large language models (LLMs) by writing specific instructions. Specifically, you should instruct the large language models (LLMs) by writing specific instructions. You can directly access the LLMs via a built-in function named `LLMs`. It is a black-box function I have pre-defined in the Python library. Please directly use this function in your code 
+The details of the function `LLMs` are as follows.
 
-## Solving the query
-Starting below, you need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person id or movie id). 
+## Signature
+def LLMs(instruction: str, input_data: str) -> str
+
+## Parameters
+- **instruction** (`str`): An instruction to the language model specifying how to process the input text. This should be a clear command and must specify the format of the output for subsequent string parsing. Here are some examples: 
+    (1) Summarize the following text and just output the string type
+    (2) Analysis of the sentiment (positive or negative) of this review. Only output `1` if positive, otherwise `0` for negative.
+    (3) read the input text and extract the main protagonist. Give only the names of people, separated by commas
+- **input_data** (`str`): The text to be processed. This can be any string where language processing is applicable, including documents, articles, or sentences. 
+
+## Return: 
+- the return type of this function is `str`. The return value can be further transformed into bool, int or split into a list according to the customized instruction.
+
+## Usages:
+- Example 1: Customize the document summarization function to compress a long article less than 100 words.
+```python
+def summarize_by_LLMs(article: str)-> str:
+    \"\"\"
+    Summarize the input text.
+    
+    :param input_text: Text to be summarized.
+    :return: A summary of the input text.
+    \"\"\"
+    
+    # First: design the `instruction` to enable the LLMs to summarize your article
+    instruction = 'Please summarize the following text with less than 100 words.'
+    summary = LLMs(instruction = instruction, input_text = article)
+    
+    # Second: truncate it into 100 words.
+    summary = summary.split(' ')[:100]
+    summary = ' '.join(summary)
+    
+    return summary
+```
+In this example, the processed text would contain a concise summary highlighting the key points of the research findings and their implications.
+
+- Example 2: Customize a function that can analyze any given movie overview and count the number of main protagonists.
+```python
+def count_protagonist(movies_overview: str) -> int:
+    \"\"\"
+    count the number of the main protagonist
+    
+    :param input_text: Text involving many protagonist
+    :return: A number of involved protagonist
+    \"\"\"
+    
+    # First: design the `instruction` to enable the LLMs to extract the names of the protagonist
+    instruction = "Please extract the main protagonist. Give only the names of people, separated by commas"
+    names_string_sequence = LLMs(instruction = instruction, input_text = movies_overview)
+    
+    # Second: split the extract sequence of names and count the number
+    number = len(names_string_sequence.split(","))
+    
+    return number
+```
+In this example, the built-in operation `LLMs` extracts the names of the main protagonist in the input text with each name separated by commas.
+
+**Note that**: Your designed instruction must specify the clear output format to control the generated content of LLMs. The clearer your instructions are, the more formatted the content generated by the language model will be, which will make it easier to parse later.
+"""
+
+            user_query= f"""# Your Output
+Starting below, you need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person ID or movie ID). 
 
 Query: {query}
 Your output:
 ```python
 [Please write the code]
-```""".format(system=self.system, header=json.dumps(self.header, indent=4), query=query, docs='\n'.join(docs), LM_functions='\n'.join(LM_functions))
-        # print(instruction)
+```"""
+
+            instruction = [system_instruction, openapi, LLM_api, user_query]
+            instruction = '\n'.join(instruction)
+
         return instruction
 
     def get_tools_instruction(self,tools):
@@ -620,7 +697,7 @@ class APIManager:
     def generate(self, query, tool_list):
         tool_doc = []
         for tool in tool_list:
-            doc = self.toolset.formulate(tool, is_execution_results=True,
+            doc = self.toolset.formulate(tool, execution_results_type=False,
                                          is_request_body=False, is_request_type=True)
             tool_doc.append(doc)
 
@@ -708,7 +785,7 @@ def func(rank, data, model_name):
     for line in tqdm(data):
         # print(line)
         tools = copy.deepcopy(line['solution'])
-        while len(tools) < 20:
+        while len(tools) < 30:
             tool = negative[random.randint(0, 10000) % len(negative)]
             if tool not in tools:
                 tools.append(tool)
@@ -732,6 +809,7 @@ def func(rank, data, model_name):
 
 if __name__ == '__main__':
     data = load_data('/Users/shizhl/Paper2024/ProTool/dataset/tmdb.json')
-    results = multi_process_func(ranks=list(range(10)), func=func, data=data, model='gpt-3.5-turbo')
-    for line in results:
-        print(line['match'])
+    results = func(0,data,'gpt-3.5-turbo')
+    # results = multi_process_func(ranks=list(range(10)), func=func, data=data, model='gpt-3.5-turbo')
+    # for line in results:
+    #     print(line['match'])

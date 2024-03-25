@@ -14,12 +14,8 @@ from utilize.apis import get_from_openai
 import tiktoken
 import multiprocessing
 from tqdm import tqdm
-import sys
-from pydantic import BaseModel, Field, Extra
-from typing import Any, Dict, List, Optional
-from io import StringIO
 import re
-import traceback
+from engine import PythonExecNet,PythonREPL
 
 encoder = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
@@ -39,67 +35,6 @@ def multi_process_func(ranks, func, data, model):
         assert r == rank
         results.extend(res)
     return results
-
-class PythonREPL(BaseModel):
-    """Simulates a standalone Python REPL."""
-
-    globals: Optional[Dict] = Field(default_factory=dict, alias="_globals")
-    locals: Optional[Dict] = Field(default_factory=dict, alias="_locals")
-
-    def run(self, command: str) -> [int,str]:
-        """Run command with own globals/locals and returns anything printed."""
-        old_stdout = sys.stdout
-        sys.stdout = mystdout = StringIO()
-        try:
-            exec(command, self.globals, self.locals)
-            sys.stdout = old_stdout
-            output = mystdout.getvalue()
-            state=1
-        except Exception as e:
-            sys.stdout = old_stdout
-            # print(str(e))
-            output = '\n'.join([
-                '------------There are something error in your output code-------------',
-                f'except Exception as e - Exception Type: {type(e).__name__}',
-                f'except Exception as e - Exception Value: {e}',
-                # traceback.format_exc(),
-                # '\nPlease debug the error and generate a correct code: ```python\n[Your code]\n```.'
-            ])
-            state=0
-        return state,output
-
-# class PythonREPL(BaseModel):
-#     """Simulates a standalone Python REPL."""
-#
-#     # globals: Optional[Dict] = Field(default_factory=dict, alias="_globals")
-#     # locals: Optional[Dict] = Field(default_factory=dict, alias="_locals")
-#
-#     def __init__(self, **data):
-#         super().__init__(**data)
-#         self._globals = {'requests': requests}  # 设置requests为全局变量
-#
-#     def run(self, command: str) -> [int, str]:
-#         """Run command and return anything printed, along with a state flag."""
-#         local_env = self._globals.copy()  # 使用包含requests的全局变量
-#         old_stdout = sys.stdout
-#         sys.stdout = mystdout = StringIO()
-#         try:
-#             exec(command, local_env, local_env)  # 使用相同的字典作为globals和locals
-#             sys.stdout = old_stdout
-#             output = mystdout.getvalue()
-#             state = 1
-#         except Exception as e:
-#             sys.stdout = old_stdout
-#             # print(str(e))
-#             output = '\n'.join([
-#                 '------------There are something error in the output code-------------',
-#                 f'except Exception as e - Exception Type: {type(e).__name__}',
-#                 f'except Exception as e - Exception Value: {e}',
-#                 traceback.format_exc(),
-#                 '\nPlease debug the error and generate a correct code: ```python\n[Your code]\n```.'
-#             ])
-#             state=0
-#         return state,output
 
 def run_tmdb(rank, data, model_name):
     toolsets = TMDBTools(

@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from io import StringIO
 import re
 import traceback
+from model.engine import PythonExecNet
 
 
 class PythonREPL(BaseModel):
@@ -63,19 +64,27 @@ def count(results):
             a+=1
     return a
 
-def evaluate(results):
+def evaluate(results,dataset='tmdb'):
     cnt = []
     accurate=[]
     LLM_function=[]
-
+    env = PythonExecNet(dataset)
     for line in tqdm(results):
         if 'code' not in line or line['code'] == None:
             cnt.append(0)
             accurate.append(0)
             LLM_function.append(0)
 
+        pattern = r"```python(.*?)```"
+        matches = re.findall(pattern, line['code'], re.DOTALL)
+
         # execute the code
-        execute_state, res = execute_code(line['code'])
+        # execute_state, res = execute_code(line['code'])
+        if matches==[]:
+            code = line['code']
+        else:
+            code = matches[0]
+        res, execute_state = env.run(code)
         line['executed_res'] = res
         line['executed_state'] = execute_state
 
@@ -91,12 +100,14 @@ def evaluate(results):
             print('No API')
             print(line['query'])
             print(line['solution'])
-            print(line['results'])
+            # print(line['results'])
         if LLM_function[-1] != 0:
             print('Trigger LLMs function')
             print(line['query'])
             print(line['solution'])
-            print(line['results'])
+            # print(line['results'])
     print(sum(cnt) / len(cnt))
     print(sum(accurate) / len(accurate))
     return results
+
+
