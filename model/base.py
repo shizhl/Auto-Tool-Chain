@@ -9,458 +9,13 @@ from tqdm import tqdm
 from utilize.utilze import load_data
 import random
 import multiprocessing
-
+import math
 import tiktoken
+from model.instruction import *
+
+
+
 encoder = tiktoken.encoding_for_model('gpt-3.5-turbo')
-
-
-class Base:
-
-    def __init__(self, model_name='gpt-3.5-turbo'):
-        self.model_name = model_name
-        self.token = []
-
-    def normalize(self, sss):
-        return sss
-
-    def generate(self, messages):
-        res = get_from_openai(model_name=self.model_name, messages=messages,usage=True)
-        self.token.append(res['usage'])
-        return self.normalize(res['content']),res['usage']
-
-    def get_token(self):
-        tmp = []
-        for line in self.token:
-            tmp = [e1 + e2 for e1, e2 in zip(tmp, line)]
-        return tmp
-
-
-class Tools:
-
-    def __init__(self, system, oas_spec):
-        self.system = system
-        self.api_spec = json.load(open(oas_spec))
-        self.endpoint = {}
-        self.host = self.api_spec['servers'][0]['url']
-        for line in self.api_spec['endpoints']:
-            # print(line)
-            tmp = {
-                "name": line[0] if self.host in line[0] else line[0].split(' ')[0] + ' ' + self.host + line[0].split(' ')[-1] ,  # unique id for each api
-                "url": self.host + line[0].split(' ')[-1],
-                "method": line[0].split(' ')[0],
-                "description": self.normalize(line[1]),
-                "parameter": line[-1]['parameters'] if 'parameters' in line[-1] else [],
-                "usage": None,
-            }
-            if 'responses' in line[-1] and 'content' in line[-1]['responses']:
-                tmp['responses'] = line[-1]['responses']['content']['application/json']["schema"]['properties']
-                # tmp['responses']=self.simplify_dict({"type":"",'properties':tmp['responses']})['properties']
-                tmp['responses'] = self.simplify_dict(tmp['responses'])
-            else:
-                tmp['responses'] = 'This API has no return value.'
-            if '_responses_json' in line[-1]:
-                tmp['_responses_json'] = line[-1]['_responses_json']
-            if '_responses_yaml' in line[-1]:
-                tmp['_responses_yaml'] = line[-1]['_responses_yaml']
-            if 'requestBody' in line[-1]:
-                tmp['requestBody'] = line[-1]['requestBody']['content']['application/json']["schema"]['properties']
-                # tmp['requestBody'] = self.simplify_dict({"type":"",'properties':tmp['requestBody']})['properties']
-                tmp['requestBody'] = self.simplify_dict(tmp['requestBody'])
-            else:
-                tmp['requestBody'] = 'This API do not need the request body when calling.'
-            self.endpoint[tmp['name']] = tmp
-
-    def match(self, name):
-
-        return name
-
-    def get_tool_list(self, ):
-
-        tmp = [k for k, v in self.endpoint.items()]
-        return tmp
-
-    def get_doc_by_name(self, name):
-        tool = self.match(name.strip())
-        return self.endpoint[tool]
-
-    def normalize(self, sss):
-        for s in ['<br />', '<br/>', '_**NOTE**:']:
-            sss = sss.replace(s, '\n')
-        sss = sss.split('\n')[0]
-        tmp = [
-            '(/documentation/web-api/#spotify-uris-and-ids)',
-            '(https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-            '(https://www.spotify.com/se/account/overview/)',
-            '(http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-            '<br/>',
-            '<br>',
-            '<br />',
-            '\n',
-            '/documentation/general/guides/track-relinking-guide/',
-            '(http://en.wikipedia.org/wiki/Universal_Product_Code)',
-            '(http://en.wikipedia.org/wiki/International_Standard_Recording_Code)',
-            '/documentation/web-api/#spotify-uris-and-ids'
-        ]
-        for s in tmp:
-            sss = sss.replace(s, '')
-        return sss
-
-    def simplify_dict(self, data):
-        """
-        Recursively simplify the dictionary by removing specific keys.
-
-        :param data: The input dictionary to be simplified.
-        :return: A simplified dictionary with specified keys removed.
-        """
-        keys_to_remove = ['example', 'nullable', 'x-spotify-docs-type', 'required', 'default', 'minimum', 'maximum', 'examples']
-
-        if isinstance(data, dict):
-            results = {}
-            for k, v in data.items():
-                if k in keys_to_remove:
-                    continue
-                if k == 'description':
-                    results[k] = normalize(self.simplify_dict(v))
-                else:
-                    results[k] = self.simplify_dict(v)
-            return results
-        elif isinstance(data, list):
-            return [self.simplify_dict(item) for item in data]
-        else:
-            return data
-
-    def get_parameters(self, doc) -> str:
-        if len(doc['parameter']) == 0:
-            parameter = 'No extra parameter, just replace the `{variable}` in the url path with actual value.'
-        else:
-            parameter = []
-            for p in doc['parameter']:
-                if p['in'] != 'query':
-                    continue
-                tmp = "- " + p['name'] + ": " + self.normalize(p['description'])
-                if 'schema' in p and 'type' in p['schema']:
-                    tmp += " (type: " + p['schema']['type'] + ")"
-                parameter.append(tmp)
-            parameter = '\n'.join(parameter)
-        return parameter
-
-    def formulate(self, tool, is_description=True, is_parameters=True, is_request_type=True,
-                  execution_results_type='responses', is_request_body=True):
-        # print(tool)
-        doc = self.get_doc_by_name(tool)
-        text_doc = ["""API url: """+doc['url']]
-        if is_request_type and 'method' in doc:
-            method = """### Request type\n""" + doc['method']
-            text_doc.append(method)
-        if is_description and 'description' in doc:
-            description = """### Description\n""" + self.normalize(doc['description'])
-            text_doc.append(description)
-        if is_parameters:
-            parameters = '### Parameter\n' + self.get_parameters(doc)
-            text_doc.append(parameters)
-        if execution_results_type is not None and execution_results_type in doc:
-            if 'yaml' in execution_results_type:
-                response = '### Execution result specification\n' + str(doc[execution_results_type])
-            else:
-                response = '### Execution result specification\n' + json.dumps(doc[execution_results_type], indent=4)
-            text_doc.append(response)
-        if is_request_body and 'requestBody' in doc:
-            requestBody = '### Request body\n' + json.dumps(doc['requestBody'], indent=4)
-            text_doc.append(requestBody)
-        text_doc = '\n'.join(text_doc)
-        return text_doc
-
-    # def simplify_response_template(self,data):
-    #     results = {}
-    #     if 'required' in data and 'properties' in data:
-    #         results['properties'] = {}
-    #         for k, v in data['properties'].items():
-    #             if k in data['required']:
-    #                 results['properties'][k]=v
-    #
-    #     for k, v in data.items():
-    #         if k == 'properties':
-    #             if 'properties' not in results:
-    #                 results['properties'] = {}
-    #             for t1, t2 in v.items():
-    #                 results['properties'][t1] = self.simplify_response_template(copy.deepcopy(t2))
-    #         elif k in ['example', 'nullable', 'x-spotify-docs-type', 'required']:
-    #             continue
-    #         elif k == 'description':
-    #             results[k] = self.normalize(v)
-    #         else:
-    #             results[k] = v
-    #     return results
-    #
-    # def simplify_response_template1(self, data):
-    #     results = {}
-    #     if 'required' in data and 'properties' in data:
-    #         results['properties'] = {}
-    #         # 仅处理'required'列表中的属性
-    #         for k in data['required']:
-    #             if k in data['properties']:
-    #                 results['properties'][k] = data['properties'][k]
-    #
-    #     # 遍历并处理其他键值对
-    #     for k, v in data.items():
-    #         if k == 'properties':
-    #             # 仅当'required'不存在或属性在'required'中时，递归处理
-    #             if 'required' not in data:
-    #                 required_properties = v.keys()
-    #             else:
-    #                 required_properties = data['required']
-    #
-    #             for t1, t2 in v.items():
-    #                 if t1 in required_properties:
-    #                     if 'properties' not in results:
-    #                         results['properties'] = {}
-    #                     results['properties'][t1] = self.simplify_response_template1(t2)
-    #         elif k in ['example', 'nullable', 'x-spotify-docs-type', 'required']:
-    #             continue
-    #         elif k == 'description':
-    #             results[k] = self.normalize(v)  # 假设normalize方法已定义
-    #         else:
-    #             results[k] = v
-    #
-    #     return results
-
-
-class TMDBTools(Tools):
-
-    def __init__(self, system, oas_spec):
-        super(TMDBTools, self).__init__(system=system, oas_spec=oas_spec)
-        access_token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
-        self.header = {
-            'Authorization': f'Bearer {access_token}'
-        }
-
-    def get_instruction(self, query, tools, LM_function=False,
-                        is_description=True,
-                        is_parameters=True,
-                        is_request_type=True,
-                        execution_results_type='responses',
-                        is_request_body=True
-                        ):
-        docs = [f'{i}. ' + self.formulate(tool,is_description=is_description,
-                                          is_parameters=is_parameters,
-                                          is_request_body=is_request_body,
-                                          execution_results_type=execution_results_type,
-                                          is_request_type=is_request_type)
-                for i, tool in enumerate(tools, start=1)]
-        if LM_function == False:
-            instruction = """{system}
-Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
-{docs}
-
-You should use the following Http header to call the API:
-```python
-headers = {header}
-```
-Note: I will give you 'headers', do not make up one, just reference it in your code. Here is an example to request the API:
-```python
-import requests
-url = "<The API url selected from the above APIs>"
-params = "<The params dict>"
-response = requests.get(url, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
-```
-If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the url.
-
-Based on provided APIs, please write python code to call API and solve it. Try to write correct Python Code and avoid grammar error, e.g. `variable is not defined`. 
-You need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person id or movie id). 
-
-Query: {query}
-Your output:
-```python
-[Please write the code]
-```""".format(system=self.system, header=json.dumps(self.header, indent=4), query=query, docs='\n\n'.join(docs))
-        else:
-            system_instruction = """In this task, you should answer the user's query by using the provided OpenAPI API.
-Specifically, you should write Python code to call the appreciate APIs to obtain the required information. Then, you are provided large language models (LLMs) to help you process the text data, e.g., text summarization and sentiment analysis. You can customize the LLMs' function using specific instructions."""
-
-            openapi = """# OpenAPIs List
-Here are the OpenAPI specifications of given APIs, including their HTTP URL, description, arguments, and execution results.
-{docs}
-
-You should use the following HTTP header to call the API:
-```python
-headers = {header}
-```
-Note: I will give you 'headers', do not make one, just reference it in your code. Here is an example to request the API:
-```python
-import requests
-url = "<The API url selected from the above APIs>"
-params = "<The params dict>"
-response = requests.get(URL, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
-```
-If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the URL.
-
-Based on the provided APIs, please write Python code to call the API and solve it. Try to write correct Python Code and avoid grammar errors, e.g. `variable is not defined`.
-""".format(header=json.dumps(self.header, indent=4), docs='\n\n'.join(docs))
-
-            LLM_api = """# Customize Your Own Function using `LLMs`
-To process the text information, you can instruct the large language models (LLMs) by writing specific instructions. Specifically, you should instruct the large language models (LLMs) by writing specific instructions. You can directly access the LLMs via a built-in function named `LLMs`. It is a black-box function I have pre-defined in the Python library. Please directly use this function in your code 
-The details of the function `LLMs` are as follows.
-
-## Signature
-def LLMs(instruction: str, input_data: str) -> str
-
-## Parameters
-- **instruction** (`str`): An instruction to the language model specifying how to process the input text. This should be a clear command and must specify the format of the output for subsequent string parsing. Here are some examples: 
-    (1) Summarize the following text and just output the string type
-    (2) Analysis of the sentiment (positive or negative) of this review. Only output `1` if positive, otherwise `0` for negative.
-    (3) read the input text and extract the main protagonist. Give only the names of people, separated by commas
-- **input_data** (`str`): The text to be processed. This can be any string where language processing is applicable, including documents, articles, or sentences. 
-
-## Return: 
-- the return type of this function is `str`. The return value can be further transformed into bool, int or split into a list according to the customized instruction.
-
-## Usages:
-- Example 1: Customize the document summarization function to compress a long article less than 100 words.
-```python
-def summarize_by_LLMs(article: str)-> str:
-    \"\"\"
-    Summarize the input text.
-    
-    :param input_text: Text to be summarized.
-    :return: A summary of the input text.
-    \"\"\"
-    
-    # First: design the `instruction` to enable the LLMs to summarize your article
-    instruction = 'Please summarize the following text with less than 100 words.'
-    summary = LLMs(instruction = instruction, input_text = article)
-    
-    # Second: truncate it into 100 words.
-    summary = summary.split(' ')[:100]
-    summary = ' '.join(summary)
-    
-    return summary
-```
-In this example, the processed text would contain a concise summary highlighting the key points of the research findings and their implications.
-
-- Example 2: Customize a function that can analyze any given movie overview and count the number of main protagonists.
-```python
-def count_protagonist(movies_overview: str) -> int:
-    \"\"\"
-    count the number of the main protagonist
-    
-    :param input_text: Text involving many protagonist
-    :return: A number of involved protagonist
-    \"\"\"
-    
-    # First: design the `instruction` to enable the LLMs to extract the names of the protagonist
-    instruction = "Please extract the main protagonist. Give only the names of people, separated by commas"
-    names_string_sequence = LLMs(instruction = instruction, input_text = movies_overview)
-    
-    # Second: split the extract sequence of names and count the number
-    number = len(names_string_sequence.split(","))
-    
-    return number
-```
-In this example, the built-in operation `LLMs` extracts the names of the main protagonist in the input text with each name separated by commas.
-
-**Note that**: Your designed instruction must specify the clear output format to control the generated content of LLMs. The clearer your instructions are, the more formatted the content generated by the language model will be, which will make it easier to parse later.
-"""
-
-            user_query= f"""# Your Output
-Starting below, you need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person ID or movie ID). 
-
-Query: {query}
-Your output:
-```python
-[Please write the code]
-```"""
-
-            instruction = [system_instruction, openapi, LLM_api, user_query]
-            instruction = '\n'.join(instruction)
-
-        return instruction
-
-    def get_tools_instruction(self,tools):
-        docs = [self.formulate(tool) for i, tool in enumerate(tools, start=1)]
-        return docs
-
-class SpotifyTools(Tools):
-
-    def __init__(self, system, oas_spec):
-        super(SpotifyTools, self).__init__(system=system, oas_spec=oas_spec)
-        config = yaml.load(open('/Users/shizhl/Paper2024/ProTool/dataset/spotify_config.yaml', 'r'), Loader=yaml.FullLoader)
-        os.environ['SPOTIPY_CLIENT_ID'] = config['spotipy_client_id']
-        os.environ['SPOTIPY_CLIENT_SECRET'] = config['spotipy_client_secret']
-        os.environ['SPOTIPY_REDIRECT_URI'] = config['spotipy_redirect_uri']
-
-        with open("/Users/shizhl/Paper2024/ProTool/specs/spotify_oas.json") as f:
-            raw_api_spec = json.load(f)
-        scopes = list(
-            raw_api_spec['components']['securitySchemes']['oauth_2_0']['flows']['authorizationCode'][
-                'scopes'].keys())
-        access_token = spotipy.util.prompt_for_user_token(scope=','.join(scopes))
-        self.header = {
-            'Authorization': f'Bearer {access_token}'
-        }
-
-    def get_instruction(self, query, tools):
-        docs = [f'{i}. ' + self.formulate(tool) for i, tool in enumerate(tools, start=1)]
-
-        instruction = """{system}
-
-Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
-{docs}
-
-You should use the following Http header to call the API:
-```python
-headers = {header}
-```
-Note: I will give you 'headers', do not make up one, just reference it in your code. Here is an example to request the API:
-```python
-import requests
-url = "<The API url selected from the above APIs>"
-params = "<The params dict>"
-method = "<The Http request type, e.g., POST, GET, PUT and DELETE>"
-if method == "GET":
-    response = requests.get(url, headers=headers, params=params)
-elif method == "POST":
-    request_body = "<The request body>"
-    response = requests.post(url, headers=headers, params=params, data=request_body)
-elif method == "PUT":
-    request_body = "<The request body>"
-    response = requests.put(url, headers=headers, params=params, data=request_body)
-elif method == "DELETE":
-    request_body = "<The request body>"
-    response = requests.delete(url, headers=headers, params=params, json=request_body)
-```
-If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the url.
-
-Based on provided APIs, please write python code to call API and solve it. You need to provide Python code that can be executed directly; any explanations should be marked as Python comments.
-
-Query: {query}
-Your output:
-```python
-[Please write the code]
-```""".format(system=self.system, header=json.dumps(self.header, indent=4), query=query, docs='\n'.join(docs))
-
-        return instruction
-
-
-def normalize(sss):
-    if type(sss) != str:
-        return sss
-    tmp = [
-        '(/documentation/web-api/#spotify-uris-and-ids)',
-        '(https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-        '(http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-        '(https://www.spotify.com/se/account/overview/)',
-        '<br/>',
-        '<br>',
-        '\n',
-        '/documentation/general/guides/track-relinking-guide/',
-        '(http://en.wikipedia.org/wiki/Universal_Product_Code)',
-        '(http://en.wikipedia.org/wiki/International_Standard_Recording_Code)',
-        '/documentation/web-api/#spotify-uris-and-ids'
-    ]
-    for s in tmp:
-        sss = sss.replace(s, '')
-    return sss
-
 
 def simplify_response_template(data):
     if 'required' in data and 'properties' in data:
@@ -478,38 +33,379 @@ def simplify_response_template(data):
                 data[k] = normalize(v)
     return data
 
-# def simplify_response_template1(data):
-#     results={}
-#     if 'required' in data and 'properties' in data:
-#         results['properties']={}
-#         for k, v in data['properties'].items():
-#             if k in data['required']:
-#                 results['properties'][k]=v
+
+def simplify_spec(data):
+    """
+    Recursively simplify the dictionary by removing specific keys.
+
+    :param data: The input dictionary to be simplified.
+    :return: A simplified dictionary with specified keys removed.
+    """
+    keys_to_remove = ['example', 'nullable', 'x-spotify-docs-type', 'required', 'default', 'minimum', 'maximum', 'examples']
+
+    if isinstance(data, dict):
+        results = {}
+        for k, v in data.items():
+            if k in keys_to_remove:
+                continue
+            # if k == 'description':
+            #     results[k] = normalize(simplify_spec(v))
+            # else:
+            results[k] = simplify_spec(v)
+        return results
+    elif isinstance(data, list):
+        return [simplify_spec(item) for item in data]
+    else:
+        if type(data) == str:
+            return normalize(data)
+        return data
+
+
+def normalize(sss):
+    for s in ['<br />', '<br/>', '_**NOTE**:']:
+        sss = sss.replace(s, '\n')
+    sss = sss.split('\n')[0]
+    tmp = [
+        '(/documentation/web-api/#spotify-uris-and-ids)',
+        '(https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
+        '(https://www.spotify.com/se/account/overview/)',
+        '(http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
+        '<br/>',
+        '<br>',
+        '<br />',
+        '\n',
+        '/documentation/general/guides/track-relinking-guide/',
+        '(http://en.wikipedia.org/wiki/Universal_Product_Code)',
+        '(http://en.wikipedia.org/wiki/International_Standard_Recording_Code)',
+        '/documentation/web-api/#spotify-uris-and-ids'
+    ]
+    for s in tmp:
+        sss = sss.replace(s, '')
+
+    for i in range(10):
+        sss = sss.replace(f'[{i}].', '')
+        sss = sss.replace(f'[{i}]', '')
+    return sss.strip()
+
+
+class Base:
+
+    def __init__(self, model_name='gpt-3.5-turbo'):
+        self.model_name = model_name
+        self.token = []
+
+    def normalize(self, sss):
+        return sss
+
+    def generate(self, messages):
+        res = get_from_openai(model_name=self.model_name, messages=messages, usage=True)
+        self.token.append(res['usage'])
+        return self.normalize(res['content']), res['usage']
+
+    def get_token(self):
+        tmp = []
+        for line in self.token:
+            tmp = [e1 + e2 for e1, e2 in zip(tmp, line)]
+        return tmp
+
+
+class Tool:
+
+    def __init__(self, spec: dict = None):
+        if spec is None:
+            self.method, self.url, self.name = 'None', 'None', 'None'
+            self.description = 'None'
+            self.parameter = []
+            self.responses = {}
+            self.requestBody = 'None'
+            return
+
+        self.name = spec['name']
+        self.method = spec['method']
+        self.url = spec['url']
+        self.description = spec['description']
+        self.parameter = spec['parameters'] if 'parameters' in spec else []
+        self.responses = {}
+
+        if 'requestBody' in spec and spec['requestBody'] != None:
+            self.requestBody = simplify_spec(spec['requestBody']['content']['application/json']["schema"]['properties'])
+        else:
+            self.requestBody = 'This API do not need the request body when calling.'
+
+        if 'responses' in spec and spec['responses'] is not None and 'content' in spec['responses']:
+            self.responses['responses'] = simplify_spec(spec['responses']['content']['application/json']["schema"]['properties'])
+            self.responses['responses'] = json.dumps(self.responses['responses'], indent=4)
+        else:
+            self.responses['responses'] = 'This API has no return value.'
+
+        if '_responses_json' in spec and spec['_responses_json'] is not None:
+            self.responses['_responses_json'] = json.dumps(spec['_responses_json'], indent=4) if type(spec['_responses_json']) == dict else spec['_responses_json']
+        else:
+            self.responses['_responses_json'] = None
+
+        if '_responses_yaml' in spec and spec['_responses_yaml'] is not None:
+            self.responses['_responses_yaml'] = spec['_responses_yaml']
+        else:
+            self.responses['_response_yaml'] = None
+
+    def update_response(self, response_format, response_example):
+        if response_format == '_response_yaml':
+            self.responses[response_format] = response_example
+        else:
+            self.responses[response_format] = response_example if type(response_example) == str else json.dumps(response_example, indent=4)
+
+    def get_parameters(self) -> str:
+        if len(self.parameter) == 0:
+            parameter = 'No extra parameter, just replace the `{variable}` in the url path with actual value.'
+        else:
+            parameter = []
+            for p in self.parameter:
+                # if p['in'] != 'query':
+                #     continue
+                tmp = "- " + p['name'] + ": " + normalize(p['description'])
+                if 'schema' in p and 'type' in p['schema']:
+                    tmp += " (type: " + p['schema']['type'] + ")"
+                parameter.append(tmp)
+            parameter = '\n'.join(parameter)
+            if '{' in self.url:
+                parameter += '\nThe `{variable}` in the url path should also be replaced with actual value.'
+        return parameter
+
+    def formulate(self, is_description=True, is_parameters=True, is_request_type=True, is_url=True,
+                  execution_results_type=None, is_request_body=True):
+        text_doc = ["""API name: """ + self.name]
+        if is_url:
+            text_doc.append('### API url\n' + self.url)
+        if is_request_type:
+            method = """### Request type\n""" + self.method
+            text_doc.append(method)
+        if is_description:
+            description = """### Description\n""" + normalize(self.description)
+            text_doc.append(description)
+        if is_parameters:
+            parameters = '### Parameter\n' + self.get_parameters()
+            text_doc.append(parameters)
+        if execution_results_type is not None and execution_results_type in self.responses:
+            response = '### Execution result specification\n' + str(self.responses[execution_results_type])
+            text_doc.append(response)
+        if is_request_body:
+            requestBody = '### Request body\n' + json.dumps(self.requestBody, indent=4)
+            text_doc.append(requestBody)
+        text_doc = '\n'.join(text_doc)
+        return text_doc
+
+
+class Tools:
+
+    def __init__(self, system, oas_spec):
+        self.system = system
+        api_spec = json.load(open(oas_spec))
+        self.endpoint = {e['name']: Tool(e) for e in api_spec['endpoints']}
+        self.host = api_spec['servers'][0]['url']
+
+    def match(self, name):
+        return name
+
+    def get_tool_list(self):
+        tmp = [k for k, v in self.endpoint.items()]
+        return tmp
+
+    def formulate(self, tool, is_description=True, is_parameters=True, is_request_type=True, is_url=True,
+                  execution_results_type=None, is_request_body=True):
+        # print(tool)
+        tool = self.match(tool)
+        doc = self.endpoint[tool].formulate(is_description=is_description,
+                                            is_parameters=is_parameters, is_url=is_url,
+                                            execution_results_type=execution_results_type,
+                                            is_request_type=is_request_type, is_request_body=is_request_body)
+        return doc
+
+
+    def attribute(self,error):
+        instruction = """"""
+
+class TMDBTools(Tools):
+
+    def __init__(self, system, oas_spec):
+        super(TMDBTools, self).__init__(system=system, oas_spec=oas_spec)
+        self.headers = {
+            'Authorization': f'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
+        }
+
+    def get_instruction(self, query, tools, LM_function=False,
+                        is_description=True,
+                        is_parameters=True,
+                        is_request_type=True,
+                        execution_results_type='responses',
+                        is_request_body=True,
+                        is_url=True):
+        docs = [f'{i}. ' + self.formulate(tool, is_description=is_description,
+                                          is_parameters=is_parameters,
+                                          is_request_body=is_request_body, is_url=is_url,
+                                          execution_results_type=execution_results_type,
+                                          is_request_type=is_request_type)
+                for i, tool in enumerate(tools, start=1)]
+#         instruction = """Here are some APIs used to access the TMDB platform. You need to answer the question by writing python code to call appreciate APIs and `print` the final answer. The API can be accessed via HTTP request.
 #
-#     for k,v in data.items():
-#         if k=='external_urls':
-#             print('')
-#         if k=='properties':
-#             if 'properties' not in results:
-#                 results['properties'] = {}
-#             for t1,t2 in v.items():
-#                 results['properties'][t1]=simplify_response_template1(copy.deepcopy(t2))
-#         elif k in ['example', 'nullable', 'x-spotify-docs-type','required']:
-#             continue
-#         elif k == 'description':
-#             results[k] = normalize(v)
-#         else:
-#             results[k]=v
-#     return results
+# Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
+# {docs}
 #
+# You should use the following Http headers to call the API:
+# ```python
+# headers = {headers}
+# ```
+# Note: I will give you the `headers` used to request the http server. Do not make up one in your code. Here is an example to request the API:
+# ```python
+# import requests
+# url = "<The API url selected from the above APIs>"
+# params = "<The params dict>"
+# response = requests.get(url, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
+# ```
+# If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the url.
 #
-# # a={}
-# # a['type']='object'
-# # a['properties']={'href': {'description': 'A link to the Web API endpoint returning the full result of the request\n', 'example': 'https://api.spotify.com/v1/me/shows?offset=0&limit=20\n', 'type': 'string'}, 'limit': {'description': 'The maximum number of items in the response (as set in the query or by default).\n', 'example': '20', 'type': 'integer'}, 'next': {'description': 'URL to the next page of items. ( `null` if none)\n', 'example': 'https://api.spotify.com/v1/me/shows?offset=1&limit=1', 'nullable': 'true', 'type': 'string'}, 'offset': {'description': 'The offset of the items returned (as set in the query or by default)\n', 'example': '0', 'type': 'integer'}, 'previous': {'description': 'URL to the previous page of items. ( `null` if none)\n', 'example': 'https://api.spotify.com/v1/me/shows?offset=1&limit=1', 'nullable': 'true', 'type': 'string'}, 'total': {'description': 'The total number of items available to return.\n', 'example': '4', 'type': 'integer'}, 'items': {'items': {'properties': {'artists': {'description': 'The artists who performed the track. Each artist object includes a link in `href` to more detailed information about the artist.', 'items': {'properties': {'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the artist.\n', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the artist.\n', 'type': 'string'}, 'name': {'description': 'The name of the artist.\n', 'type': 'string'}, 'type': {'description': 'The object type.\n', 'enum': ['artist'], 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the artist.\n', 'type': 'string'}}, 'type': 'object', 'x-spotify-docs-type': 'SimplifiedArtistObject'}, 'type': 'array'}, 'available_markets': {'description': 'A list of the countries in which the track can be played, identified by their [ISO 3166-1 alpha-2](http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code.\n', 'items': {'type': 'string'}, 'type': 'array'}, 'disc_number': {'description': 'The disc number (usually `1` unless the album consists of more than one disc).', 'type': 'integer'}, 'duration_ms': {'description': 'The track length in milliseconds.', 'type': 'integer'}, 'explicit': {'description': 'Whether or not the track has explicit lyrics ( `true` = yes it does; `false` = no it does not OR unknown).', 'type': 'boolean'}, 'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the track.', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}, 'is_local': {'description': 'Whether or not the track is from a local file.\n', 'type': 'boolean'}, 'is_playable': {'description': 'Part of the response when [Track Relinking](/documentation/general/guides/track-relinking-guide/) is applied. If `true`, the track is playable in the given market. Otherwise `false`.\n', 'type': 'boolean'}, 'linked_from': {'properties': {'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the track.\n', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}, 'type': {'description': 'The object type: "track".\n', 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'name': {'description': 'The name of the track.', 'type': 'string'}, 'preview_url': {'description': 'A URL to a 30 second preview (MP3 format) of the track.\n', 'type': 'string', 'x-spotify-policy-list': [{}]}, 'restrictions': {'properties': {'reason': {'description': "The reason for the restriction. Supported values:\n- `market` - The content item is not available in the given market.\n- `product` - The content item is not available for the user's subscription type.\n- `explicit` - The content item is explicit and the user's account is set to not play explicit content.\n\nAdditional reasons may be added in the future.\n**Note**: If you use this field, make sure that your application safely handles unknown values.\n", 'type': 'string'}}, 'required': [], 'type': 'object'}, 'track_number': {'description': 'The number of the track. If an album has several discs, the track number is the number on the specified disc.\n', 'type': 'integer'}, 'type': {'description': 'The object type: "track".\n', 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}}, 'type': 'object', 'x-spotify-docs-type': 'SimplifiedTrackObject'}, 'type': 'array'}}
-# a={'type': 'object', 'properties': {'items': {'properties': {'artists': {'description': 'The artists who performed the track. Each artist object includes a link in `href` to more detailed information about the artist.', 'items': {'properties': {'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the artist.\n', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the artist.\n', 'type': 'string'}, 'name': {'description': 'The name of the artist.\n', 'type': 'string'}, 'type': {'description': 'The object type.\n', 'enum': ['artist'], 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the artist.\n', 'type': 'string'}}, 'type': 'object', 'x-spotify-docs-type': 'SimplifiedArtistObject'}, 'type': 'array'}, 'available_markets': {'description': 'A list of the countries in which the track can be played, identified by their [ISO 3166-1 alpha-2](http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code.\n', 'items': {'type': 'string'}, 'type': 'array'}, 'disc_number': {'description': 'The disc number (usually `1` unless the album consists of more than one disc).', 'type': 'integer'}, 'duration_ms': {'description': 'The track length in milliseconds.', 'type': 'integer'}, 'explicit': {'description': 'Whether or not the track has explicit lyrics ( `true` = yes it does; `false` = no it does not OR unknown).', 'type': 'boolean'}, 'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the track.', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}, 'is_local': {'description': 'Whether or not the track is from a local file.\n', 'type': 'boolean'}, 'is_playable': {'description': 'Part of the response when [Track Relinking](/documentation/general/guides/track-relinking-guide/) is applied. If `true`, the track is playable in the given market. Otherwise `false`.\n', 'type': 'boolean'}, 'linked_from': {'properties': {'external_urls': {'properties': {'spotify': {'description': 'The [Spotify URL](/documentation/web-api/#spotify-uris-and-ids) for the object.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'href': {'description': 'A link to the Web API endpoint providing full details of the track.\n', 'type': 'string'}, 'id': {'description': 'The [Spotify ID](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}, 'type': {'description': 'The object type: "track".\n', 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}}, 'required': [], 'type': 'object'}, 'name': {'description': 'The name of the track.', 'type': 'string'}, 'preview_url': {'description': 'A URL to a 30 second preview (MP3 format) of the track.\n', 'type': 'string', 'x-spotify-policy-list': [{}]}, 'restrictions': {'properties': {'reason': {'description': "The reason for the restriction. Supported values:\n- `market` - The content item is not available in the given market.\n- `product` - The content item is not available for the user's subscription type.\n- `explicit` - The content item is explicit and the user's account is set to not play explicit content.\n\nAdditional reasons may be added in the future.\n**Note**: If you use this field, make sure that your application safely handles unknown values.\n", 'type': 'string'}}, 'required': [], 'type': 'object'}, 'track_number': {'description': 'The number of the track. If an album has several discs, the track number is the number on the specified disc.\n', 'type': 'integer'}, 'type': {'description': 'The object type: "track".\n', 'type': 'string'}, 'uri': {'description': 'The [Spotify URI](/documentation/web-api/#spotify-uris-and-ids) for the track.\n', 'type': 'string'}}, 'type': 'object', 'x-spotify-docs-type': 'SimplifiedTrackObject'}, 'type': 'array'}}
-# print(json.dumps(a))
-# b=simplify_response_template1(a)['properties']
-# print(json.dumps(b))
+# Based on provided APIs, please write python code to call API and solve it. Try to write correct Python Code and avoid grammar error, e.g. `variable is not defined`.  You need to provide Python code that can be executed directly; Please add the name of the used APIs in Python comments for the attributable consideration.
+#
+# **Note**: any information, e.g., person id or movie id, you need to obtain it by calling appropriate APIs. DO NOT make up value by yourself!
+#
+# Query: {query}
+# Your output:
+# ```python
+# headers = {headers}
+# Complete the python code...
+# ```""".format(headers=json.dumps(self.headers, indent=4), query=query, docs='\n\n'.join(docs))
+#         user_query = f"""# Your Output
+# Starting below, you need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person ID or movie ID).
+#
+# Query: {query}
+# Your output:
+# ```python
+# [Please write the code]
+# ```"""
+#
+#         instruction = [instruction, user_query]
+#         instruction = '\n'.join(instruction)
+
+
+        instruction = GPT_TMDB_INSTRUCTION.format(system=self.system,headers=json.dumps(self.headers, indent=4), query=query, docs='\n\n'.join(docs))
+        return instruction
+
+
+class SpotifyTools(Tools):
+
+    def __init__(self, system, oas_spec):
+        super(SpotifyTools, self).__init__(system=system, oas_spec=oas_spec)
+        config = yaml.load(open('/Users/shizhl/Paper2024/ProTool/dataset/spotify_config.yaml', 'r'), Loader=yaml.FullLoader)
+        os.environ['SPOTIPY_CLIENT_ID'] = config['spotipy_client_id']
+        os.environ['SPOTIPY_CLIENT_SECRET'] = config['spotipy_client_secret']
+        os.environ['SPOTIPY_REDIRECT_URI'] = config['spotipy_redirect_uri']
+        with open("/Users/shizhl/Paper2024/ProTool/specs/spotify_oas.json") as f:
+            raw_api_spec = json.load(f)
+        scopes = list(
+            raw_api_spec['components']['securitySchemes']['oauth_2_0']['flows']['authorizationCode'][
+                'scopes'].keys())
+        access_token = spotipy.util.prompt_for_user_token(scope=','.join(scopes))
+        self.headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        # access_token = "BQDFeUrmM11KEebVbtIoHHCH4QIyI36UUSq67xkOI3ddGMAhK_0u7UZwNWfha1Evbb6hLYBx3ijPbfiyb46I8STJc2ctG5Wab45lPjCFJvMuMKaAuqAhuSDr8FqLDxYdQXI9GcKffAnp5_PPCMYSezTDWlFR8CKyeU0fbNS0c2G2Bd7bDkrnt5EphM6ZFXdHdae7VFe8_dPblBX6ZEJu5BkcooA6NJ2ppvLpqT4hkEeyWX5q1SCrJN_dhnZv3HXpJ6_JSYKA_XcRTPsDVAmPbcDaLfb0-Qgdn8CdA21Jobgkw6IWUwKPk-kIWzy0rKevKcIULpWKhNHNd0hvaHsn_mh9"
+        # self.headers ={
+        #         'Authorization': f'Bearer {access_token}'
+        # }
+    def get_instruction(self,  query, tools, LM_function=False,
+                        is_description=True,
+                        is_parameters=True,
+                        is_request_type=True,
+                        execution_results_type='responses',
+                        is_request_body=True,
+                        is_url=True):
+        docs = [f'{i}. ' + self.formulate(tool, is_description=is_description,
+                                          is_parameters=is_parameters,
+                                          is_request_body=is_request_body, is_url=is_url,
+                                          execution_results_type=execution_results_type,
+                                          is_request_type=is_request_type)
+                for i, tool in enumerate(tools, start=1)]
+
+        instruction = GPT_SPOTIFY_INSTRUCTION.format(system=self.system, headers=json.dumps(self.headers, indent=4), query=query, docs='\n'.join(docs))
+
+        return instruction
+
+
+
+class WeatherTools(Tools):
+
+    def __init__(self, system, oas_spec):
+        super(WeatherTools, self).__init__(system=system, oas_spec=oas_spec)
+        self.headers = {
+            'X-RapidAPI-Key': '0ade7be5b2mshd53f97c3d81bcd4p1587abjsn25826e5f4a79',
+            'X-RapidAPI-Host': 'ai-weather-by-meteosource.p.rapidapi.com'
+        }
+    def get_instruction(self, query, tools,
+                        is_description=True,
+                        is_parameters=True,
+                        is_request_type=True,
+                        execution_results_type='responses',
+                        is_request_body=True,
+                        is_url=True):
+        docs = [f'{i}. ' + self.formulate(tool, is_description=is_description,
+                                          is_parameters=is_parameters,
+                                          is_request_body=is_request_body, is_url=is_url,
+                                          execution_results_type=execution_results_type,
+                                          is_request_type=is_request_type)
+                for i, tool in enumerate(tools, start=1)]
+
+        instruction = """Here are some APIs used to access the Open Weather platform. You need to answer the question by writing python code to call appreciate APIs and `print` the final answer. The API can be accessed via HTTP request. 
+
+Here are the OpenAPI Specification of given APIs, including their http url, description, arguments and execution results.
+{docs}
+
+You should use the following Http headers to call the API:
+```python
+headers = {headers}
+```
+Note: I will give you the `headers` used to request the http server. Do not make up one in your code. Here is an example to request the API:
+```python
+import requests
+url = "<The API url selected from the above APIs>"
+params = "<The params dict>"
+response = requests.get(url, headers=headers, params=params) # The variable `headers` has been defined, please JUST USE it.
+```
+If the API path contains "{{}}", it means that it is a variable and you should replace it with the appropriate value. For example, if the path is "/users/{{user_id}}/tweets", you should replace "{{user_id}}" with the user id. "{{" and "}}" cannot appear in the url.
+
+Based on provided APIs, please write python code to call API and solve it. Try to write correct Python Code and avoid grammar error, e.g. `variable is not defined`.  You need to provide Python code that can be executed directly; Please add the name of the used APIs in Python comments for the attributable consideration. 
+
+**Note**: any information, e.g., person id or movie id, you need to obtain it by calling appropriate APIs. DO NOT make up value by yourself!
+
+Query: {query}
+Your output:
+```python
+headers = {headers}
+Complete the python code...
+```""".format(headers=json.dumps(self.headers, indent=4), query=query, docs='\n\n'.join(docs))
+
+        user_query = f"""# Your Output
+Starting below, you need to provide Python code that can be executed directly; any explanations should be marked as Python comments. Note: DO NOT make up value by yourself, please use the given APIs to acquire information (e.g., person ID or movie ID). 
+
+Query: {query}
+Your output:
+```python
+[Please write the code]
+```"""
+
+        instruction = [instruction, user_query]
+        instruction = '\n'.join(instruction)
+
+        return instruction
+
+class RapidTools(Tools):
+    def __init__(self, system, oas_spec):
+        super(RapidTools, self).__init__(system=system, oas_spec=oas_spec)
+        self.headers = {
+            'Authorization': f'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
+        }
+
+
+
+# ====================== LLMs Tools ========================
 
 
 class LLMTools:
@@ -687,6 +583,8 @@ Your output: """.format(instruction=instruction, candidate='\n'.join([f'{i}. {e}
     #
 
 
+# ====================== API manager ========================
+
 class APIManager:
 
     def __init__(self, model_name='gpt-3.5-turbo', toolset: Union[Tools, TMDBTools, SpotifyTools] = None):
@@ -755,11 +653,9 @@ class Solution:
         # print(res['usage'])
         return res['content']
 
-import math
-
 def multi_process_func(ranks, func, data, model):
     pools = multiprocessing.Pool(processes=len(ranks))
-    length = math.ceil(len(data) // len(ranks) )
+    length = math.ceil(len(data) // len(ranks))
     collects = []
     for ids, rank in enumerate(ranks):
         collect = data[ids * length:(ids + 1) * length]
@@ -773,6 +669,7 @@ def multi_process_func(ranks, func, data, model):
         results.extend(res)
     return results
 
+
 def func(rank, data, model_name):
     toolsets = TMDBTools(
         system='Here are some APIs used to access the TMDB platform. You need to answer the question by writing python code to call appreciate APIs and `print` the final answer. The API can be accessed via HTTP request. ',
@@ -780,7 +677,7 @@ def func(rank, data, model_name):
     )
     model = APIManager(model_name='gpt-3.5-turbo', toolset=toolsets)
     negative = toolsets.get_tool_list()
-    results=[]
+    results = []
 
     for line in tqdm(data):
         # print(line)
@@ -795,8 +692,8 @@ def func(rank, data, model_name):
         res = model.generate(query=line['query'], tool_list=tools)
         # encoded_docs = encoder.encode(instruction)
         # print(len(encoded_docs))
-        line['output']=res
-        line['match']=len([e for e in line['solution'] if e.split(' ')[-1].strip() in res]),len(line['solution'])
+        line['output'] = res
+        line['match'] = len([e for e in line['solution'] if e.split(' ')[-1].strip() in res]), len(line['solution'])
 
         # print('-' * 50)
         # print(line['solution'])
@@ -809,7 +706,4 @@ def func(rank, data, model_name):
 
 if __name__ == '__main__':
     data = load_data('/Users/shizhl/Paper2024/ProTool/dataset/tmdb.json')
-    results = func(0,data,'gpt-3.5-turbo')
-    # results = multi_process_func(ranks=list(range(10)), func=func, data=data, model='gpt-3.5-turbo')
-    # for line in results:
-    #     print(line['match'])
+    results = func(0, data, 'gpt-3.5-turbo')

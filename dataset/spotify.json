@@ -378,7 +378,7 @@
         "query": "Follow all the singers involved in the song When You Believe",
         "solution": [
             "GET https://api.spotify.com/v1/search",
-            "GET https://api.spotify.com/v1/track/{id}",
+            "GET https://api.spotify.com/v1/tracks/{id}",
             "PUT https://api.spotify.com/v1/me/following"
         ],
         "q_id": 40,

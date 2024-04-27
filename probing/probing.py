@@ -1,21 +1,17 @@
 import random
 from collections import defaultdict
-from model.base import Tools, TMDBTools
-from model.base import Base
+from model.base import Tool,normalize
 from utilize.apis import get_from_openai
-from utilize.utilze import load_data, write_file
-from tqdm import tqdm
 from model.engine import *
-import ast
 import yaml
 
 model_name = 'gpt-3.5-turbo'
-dataset = 'spotify'  # spotify
+dataset = 'weather'  # spotify
 if dataset == 'tmdb':
     headers = {
         'Authorization': f'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZGJhYjU5MGM3ZWFjYTA3ZWJlNjI1OTc0YTM3YWQ5MiIsInN1YiI6IjY1MmNmODM3NjYxMWI0MDBmZmM3MDM5OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.McsK4Wm5XnRSDLn62Jhy787YUAwZcQz0X5qzkGuLe_s'
     }
-else:
+elif dataset == 'spotify':
     config = yaml.load(open('/Users/shizhl/Paper2024/ProTool/dataset/spotify_config.yaml', 'r'), Loader=yaml.FullLoader)
     os.environ['SPOTIPY_CLIENT_ID'] = config['spotipy_client_id']
     os.environ['SPOTIPY_CLIENT_SECRET'] = config['spotipy_client_secret']
@@ -29,13 +25,20 @@ else:
     headers = {
         'Authorization': f'Bearer {access_token}'
     }
+elif dataset == 'weather':
+    headers = {
+        'X-RapidAPI-Key': '0ade7be5b2mshd53f97c3d81bcd4p1587abjsn25826e5f4a79',
+        'X-RapidAPI-Host': 'ai-weather-by-meteosource.p.rapidapi.com'
+    }
+else:
+    raise NotImplemented
 
 env = PythonExecNet(dataset=dataset)
 
 system_single = f"""In this task, you are a programming engineer. Your task is to test the provided APIs, which are provided by the OpenAPI platform to access the web information, e.g., movie and music.
 Specifically, you need to write Python code to pass the required arguments to call the APIs, getting the execution results of the APIs.
 
-You should use the following HTTP header to call the API:
+You should use the following HTTP headers to call the API:
 ```python
 {headers}
 ```
@@ -74,7 +77,7 @@ Specifically, I only know the description, parameter and request url of this bla
 
 Since you may need the parameter to call the black-box API, I also provide your some known APIs with clear documentation, including the functional description, parameters, request type (HTTP GET or POST) and execution result example. You can use these APIs to first get required information( e.g., id), and then call the black-box API.
  
-All the APIs are called via HTTP request. And you should use the following HTTP header to call the API:
+All the APIs are called via HTTP request. And you should use the following HTTP headers to call the API:
 ```python
 {headers}
 ```
@@ -144,197 +147,6 @@ Please propose one question which can be solved by calling this API:
 Question: """
 
 
-
-def run_single_probing():
-    toolsets = TMDBTools(
-        system='Here are some APIs used to access the TMDB platform. You need to answer the question by writing python code to call appreciate APIs and `print` the final answer. The API can be accessed via HTTP request. ',
-        oas_spec='../dataset/tmdb_api_spec.json',
-    )
-    # spec = load_data('../dataset/tmdb_api_spec.json')
-    cnt = 0
-    spec = load_data('../dataset/tmdb.pseudo_spec.json')
-
-    for line in tqdm(spec['endpoints']):
-        print('*' * 50)
-        tool = line[0]
-        docs = [toolsets.formulate(tool, is_description=True, is_parameters=True, is_request_type=True, execution_results_type=None)]
-        message = [
-            {"role": "system", 'content': system_single},
-            {"role": "user", 'content': user_single.format(docs='\n'.join([f'{i}. {e}' for i, e in enumerate(docs, 1)]))}
-        ]
-        # code = get_from_openai(model_name=model_name,messages=message)['content']
-        # line[2]['code'] = code
-        code = line[2]['code']
-        pattern = r"```python(.*?)```"
-        print(code.split('\n')[0])
-        matches = re.findall(pattern, code, re.DOTALL)
-        example, state = env.run(matches[0])
-        try:
-            example = json.loads(example)
-            # example = ast.literal_eval(example)
-            if state == False:
-                print(tool)
-                print(example)
-                cnt += 0
-                line[2]['example'] = None
-                line[2]['_responses_json'] = None
-                line[2]['_responses_yaml'] = None
-            else:
-                cnt += 1
-                line[2]['example'] = example
-                line[2]['_responses_json'] = simplify_json(example)
-                line[2]['_responses_yaml'] = '\n'.join(get_yaml(example, 'execution result'))
-        except:
-            cnt += 0
-            line[2]['example'] = None
-            line[2]['_responses_json'] = None
-            line[2]['_responses_yaml'] = None
-            print(tool)
-            print(example)
-
-    print(cnt)
-    write_file(spec, '../dataset/tmdb.pseudo_spec.json')
-
-
-def normalize(sss):
-    for s in ['<br />', '<br/>', '_**NOTE**:']:
-        sss = sss.replace(s, '\n')
-    sss = sss.split('\n')[0]
-    tmp = [
-        '(/documentation/web-api/#spotify-uris-and-ids)',
-        '(https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-        '(https://www.spotify.com/se/account/overview/)',
-        '(http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)',
-        '<br/>',
-        '<br>',
-        '<br />',
-        '\n',
-        '/documentation/general/guides/track-relinking-guide/',
-        '(http://en.wikipedia.org/wiki/Universal_Product_Code)',
-        '(http://en.wikipedia.org/wiki/International_Standard_Recording_Code)',
-        '/documentation/web-api/#spotify-uris-and-ids'
-    ]
-    for s in tmp:
-        sss = sss.replace(s, '')
-
-    for i in range(10):
-        sss = sss.replace(f'[{i}].', '')
-        sss = sss.replace(f'[{i}]', '')
-    return sss.strip()
-
-
-def simplify_spec(data):
-    """
-    Recursively simplify the dictionary by removing specific keys.
-
-    :param data: The input dictionary to be simplified.
-    :return: A simplified dictionary with specified keys removed.
-    """
-    keys_to_remove = ['example', 'nullable', 'x-spotify-docs-type', 'required', 'default', 'minimum', 'maximum', 'examples']
-
-    if isinstance(data, dict):
-        results = {}
-        for k, v in data.items():
-            if k in keys_to_remove:
-                continue
-            # if k == 'description':
-            #     results[k] = normalize(simplify_spec(v))
-            # else:
-            results[k] = simplify_spec(v)
-        return results
-    elif isinstance(data, list):
-        return [simplify_spec(item) for item in data]
-    else:
-        if type(data) == str:
-            return normalize(data)
-        return data
-
-
-class Tool:
-
-    def __init__(self, spec: dict = None):
-        if spec is None:
-            self.method, self.url, self.name = 'None', 'None', 'None'
-            self.description = 'None'
-            self.parameter = []
-            self.responses = {}
-            self.requestBody = 'None'
-            return
-
-        self.name = spec['name']
-        self.method = spec['method']
-        self.url = spec['url']
-        self.description = spec['description']
-        self.parameter = spec['parameters'] if 'parameters' in spec else []
-        self.responses = {}
-
-        if 'requestBody' in spec and spec['requestBody'] != None:
-            self.requestBody = simplify_spec(spec['requestBody']['content']['application/json']["schema"]['properties'])
-        else:
-            self.requestBody = 'This API do not need the request body when calling.'
-
-        if 'responses' in spec and spec['responses'] is not None and 'content' in spec['responses']:
-            self.responses['responses'] = simplify_spec(spec['responses']['content']['application/json']["schema"]['properties'])
-            self.responses['responses'] = json.dumps(self.responses['responses'], indent=4)
-        else:
-            self.responses['responses'] = 'This API has no return value.'
-
-        if '_response_json' in spec and spec['_response_json'] is not None:
-            self.responses['_response_json'] = json.dumps(spec['_response_json'], indent=4) if type(spec['_response_json']) == dict else spec['_response_json']
-        else:
-            self.responses['_response_json'] = None
-
-        if '_response_yaml' in spec and spec['_response_yaml'] is not None:
-            self.responses['_response_yaml'] = spec['_response_yaml']
-        else:
-            self.responses['_response_yaml'] = None
-
-    def update_response(self, response_format, response_example):
-        if response_format == '_response_yaml':
-            self.responses[response_format] = response_example
-        else:
-            self.responses[response_format] = response_example if type(response_example) == str else json.dumps(response_example, indent=4)
-
-    def get_parameters(self) -> str:
-        if len(self.parameter) == 0:
-            parameter = 'No extra parameter, just replace the `{variable}` in the url path with actual value.'
-        else:
-            parameter = []
-            for p in self.parameter:
-                if p['in'] != 'query':
-                    continue
-                tmp = "- " + p['name'] + ": " + normalize(p['description'])
-                if 'schema' in p and 'type' in p['schema']:
-                    tmp += " (type: " + p['schema']['type'] + ")"
-                parameter.append(tmp)
-            parameter = '\n'.join(parameter)
-            if '{' in self.url:
-                parameter += '\nThe `{variable}` in the url path should also be replaced with actual value.'
-        return parameter
-
-    def formulate(self, is_description=True, is_parameters=True, is_request_type=True, is_url=True,
-                  execution_results_type=None, is_request_body=True):
-        text_doc = ["""API name: """ + self.name]
-        if is_url:
-            text_doc.append('### API url\n' + self.url)
-        if is_request_type:
-            method = """### Request type\n""" + self.method
-            text_doc.append(method)
-        if is_description:
-            description = """### Description\n""" + normalize(self.description)
-            text_doc.append(description)
-        if is_parameters:
-            parameters = '### Parameter\n' + self.get_parameters()
-            text_doc.append(parameters)
-        if execution_results_type is not None and execution_results_type in self.responses:
-            response = '### Execution result specification\n' + self.responses[execution_results_type]
-            text_doc.append(response)
-        if is_request_body:
-            requestBody = '### Request body\n' + json.dumps(self.requestBody, indent=4)
-            text_doc.append(requestBody)
-        text_doc = '\n'.join(text_doc)
-        return text_doc
-
 def is_json(json_str):
     try:
         tmp = json.loads(json_str)
@@ -359,7 +171,6 @@ def _probing(t, tools):
             {"role": "system", 'content': system_multi},
             {"role": "user", 'content': user_multi.format(t_doc=docs[0], docs='\n'.join([f'{i}. {e}' for i, e in enumerate(docs[1:], 1)]))},
         ]
-
 
     try:
         for i in range(3):
@@ -427,10 +238,9 @@ def topology_probing(filename='../dataset/tmdb_api_spec_v1.json', k=3):
     for e in raw_spec['endpoints']:
         api_list.append(e['name'])
         api_spec[e['name']] = Tool(e)
-        if '_responses_json' in e:
-            cache_api.append(e['name'])
-
-    api_list = [e for e in api_list if e not in cache_api]
+        # if '_responses_json' in e:
+        #     cache_api.append(e['name'])
+    # api_list = [e for e in api_list if e not in cache_api]
 
     # 初始
     for api in tqdm(api_list):
@@ -463,11 +273,14 @@ def topology_probing(filename='../dataset/tmdb_api_spec_v1.json', k=3):
         if endpoint['name'] in cache_api:
             raw_spec['endpoints'][i]['_responses_json'] = api_spec[endpoint['name']].responses['_responses_json']
             raw_spec['endpoints'][i]['_responses_yaml'] = api_spec[endpoint['name']].responses['_responses_yaml']
-
+        else:
+            raw_spec['endpoints'][i]['_responses_json'] = None
+            raw_spec['endpoints'][i]['_responses_yaml'] = None
     return raw_spec
 
 
-# filename='../dataset/tmdb_api_spec_v1.json'
-filename = '../dataset/spotify.topo.v0.api_spec.json'
+# filename='/Users/shizhl/Paper2024/ProTool/dataset/tmdb/tmdb.spec.raw.v1.json'
+# filename = '../dataset/spotify.topo.v0.api_spec.json'
+filename = '/Users/shizhl/Paper2024/ProTool/dataset/weather/weather.spec.raw.v1.json'
 res = topology_probing(filename)
-write_file(res, '../dataset/spotify.topo.v1.api_spec.json')
+write_file(res, '../dataset/weather/weather.spec.topo.v1.json')
