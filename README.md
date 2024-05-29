@@ -1,5 +1,5 @@
 # Automatic Tool Chain (ATC)
-The main code for 'Chain of Tools: Large Language Model is a Automatic Multi-tool Learner'
+The main code for 'Chain of Tools: Large Language Model is an Automatic Multi-tool Learner'
 
 This project aims to enable the LLM as an Automatic Multi-tool Learner, which can automatically utilize a chain of various tools through programming.
 
