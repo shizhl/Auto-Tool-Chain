@@ -32,3 +32,15 @@ python run_probing.py
 # Todo
 - [ ] The new collected benchmark TooFlow, wll be released as soon as possible
 - [ ] More demo involving various tools
+
+# Citation
+```text
+@misc{shi2024chain,
+      title={Chain of Tools: Large Language Model is an Automatic Multi-tool Learner}, 
+      author={Zhengliang Shi and Shen Gao and Xiuyi Chen and Yue Feng and Lingyong Yan and Haibo Shi and Dawei Yin and Zhumin Chen and Suzan Verberne and Zhaochun Ren},
+      year={2024},
+      eprint={2405.16533},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
