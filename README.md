@@ -35,12 +35,10 @@ python run_probing.py
 
 # Citation
 ```text
-@misc{shi2024chain,
-      title={Chain of Tools: Large Language Model is an Automatic Multi-tool Learner}, 
-      author={Zhengliang Shi and Shen Gao and Xiuyi Chen and Yue Feng and Lingyong Yan and Haibo Shi and Dawei Yin and Zhumin Chen and Suzan Verberne and Zhaochun Ren},
-      year={2024},
-      eprint={2405.16533},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@article{shi2024chain,
+  title={Chain of Tools: Large Language Model is an Automatic Multi-tool Learner},
+  author={Shi, Zhengliang and Gao, Shen and Chen, Xiuyi and Feng, Yue and Yan, Lingyong and Shi, Haibo and Yin, Dawei and Chen, Zhumin and Verberne, Suzan and Ren, Zhaochun},
+  journal={arXiv preprint arXiv:2405.16533},
+  year={2024}
 }
 ```
